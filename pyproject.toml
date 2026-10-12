@@ -1,14 +1,13 @@
 [project]
-name = "news-detector"
+name = "project"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
-
-[dependency-groups]
-dev = [
-    "mypy>=2.4.0",
-    "pre-commit",
-    "ruff",
+dependencies = [
+    "pandas>=3.0.6",
+    "py3langid>=0.4.0",
+    "requests>=2.34.2",
+    "trafilatura>=2.3.1",
+    "warcio>=1.8.1",
 ]

@@ -1,0 +1,3 @@
+Dane pobierane z commoncrawl.org
+dane najnowsze: CC-MAIN-2026-39
+dane stare: CC-MAIN-2019-39
