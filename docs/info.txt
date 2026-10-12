@@ -1,0 +1,30 @@
+Definicje (robocze):
+
+- Serwis informacyjny: domena '.pl' (lub z treścią głównie po polsku), z której w danym oknie czasowym 
+(lipiec-wrzesień 2026) pozyskano minimum 20 stron z markupem artykułu, datą publikacji i tekstem >= 150 słów.
+Wykluczamy blogi osobiste, sklepy, fora, itd.
+
+- Treść generowana: artykuł z wynikiem detektora >= t, gdzie t ustalamy na zbiorze wstępnym, tak zeby FPR nie przekraczał
+1%. Etykieta oznacza "prawdopodobnie w znacznej części wygenerowany przez LLM". Nie rozrózniamy pełnej generacji od 
+parafrazy wspomaganej AI.
+
+- Masowo: domena, której skorygowany o błędy detektora udział artykułów generowanych wynosi nie mniej niz 30%. 
+
+Dodatkowe załozenia:
+
+Porównany zostanie wynik detektoru na artykułach z 2026 roku, do artykułów publikowanych przed pojawieniem się modeli LLM
+(przyjęto rok 2019)
+
+Podstawa prawna:
+RODO: nie zapisywane są imiona i nazwiska autorów (są one anonimizowane). Pełne teskty zostają lokalnie w katalogu poza 
+repozytorium
+
+Nie redystrybujemy pełnych tekstów. Publikowany jest URL, hash i współrzędne rekordu - co pozwala na odtworzenie danych 
+z Common Crawl
+
+Zakres próby:
+lipiec - wrzesień 2026 (artykuły z datą publikacji z tego okna)
+próba kontrolna (rok 2019) - poza główną próbą.
+
+Znane ograniczenia:
+Common Crawl nie jest pełnym zbiorem internetu, duze serwisy są przedstawione lepiej niz małe.
