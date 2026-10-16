@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local environment
+.env
+
+# Private article texts and tool caches
+data/raw_private/
+.mypy_cache/
+.ruff_cache/
+data/derived/
