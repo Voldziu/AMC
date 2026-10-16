@@ -1,0 +1,14 @@
+# Publication year -> Common Crawl crawl to sample that year from.
+#
+# The pipeline fetches one year at a time, taking only articles published in that
+# year from the crawl listed here. A crawl can hold pages published earlier, and
+# captures lag behind publication, so the crawl from the year after (or late in the
+# same year) often works best. The same crawl may be listed for several years.
+#
+# Available crawls: https://index.commoncrawl.org/collinfo.json
+2020: CC-MAIN-2021-04
+2021: CC-MAIN-2022-05
+2022: CC-MAIN-2023-06
+2023: CC-MAIN-2024-10
+2024: CC-MAIN-2025-05
+2025: CC-MAIN-2026-04
