@@ -29,8 +29,8 @@ class Settings(BaseSettings):
 
     # Common Crawl
     crawl_id: str = Field(default="CC-MAIN-2026-39", pattern=r"^CC-MAIN-\d{4}-\d{2}$")
-    index_host: str = "https://index.commoncrawl.org"
     data_host: str = "https://data.commoncrawl.org"
+    # Primary language of a capture in the index (CLD2, ISO 639-3)
     index_language: str = "pol"
 
     # HTTP client
@@ -39,14 +39,14 @@ class Settings(BaseSettings):
     request_timeout_seconds: float = Field(default=90.0, gt=0)
     max_retries: int = Field(default=5, ge=0)
     retry_backoff_seconds: float = Field(default=1.0, ge=0)
-    index_delay_seconds: float = Field(default=1.0, ge=0)
     warc_delay_seconds: float = Field(default=0.5, ge=0)
     workers: int = Field(default=4, ge=1)
+    # DuckDB threads reading the Parquet index; the CDN throttles above ~4
+    index_threads: int = Field(default=2, ge=1)
 
     # Sampling and filtering
     articles_per_domain: int = Field(default=20, ge=1)
     max_fetch_per_domain: int = Field(default=100, ge=1)
-    index_pages_per_domain: int = Field(default=3, ge=1)
     min_url_path_length: int = Field(default=25, ge=0)
     min_words: int = Field(default=150, ge=1)
     pub_year: int | None = Field(default=None, ge=1990, le=2100)
@@ -74,9 +74,9 @@ class Settings(BaseSettings):
         return date(self.pub_year, 12, 31) if self.pub_year else None
 
     @property
-    def index_url(self) -> str:
-        """Endpoint of the CDX index for the configured crawl."""
-        return f"{self.index_host}/{self.crawl_id}-index"
+    def cache_dir(self) -> Path:
+        """Directory for reusable downloads (e.g. the Parquet file layout)."""
+        return self.data_dir / "cache"
 
     @property
     def domains_csv(self) -> Path:

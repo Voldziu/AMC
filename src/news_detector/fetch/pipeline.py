@@ -8,7 +8,6 @@ Everything else (crawl, limits, paths, concurrency) comes from ``config.settings
 
 import argparse
 import hashlib
-import random
 import re
 import time
 from collections import Counter
@@ -116,19 +115,22 @@ def process_record(
 
 
 def run_domain(
-    session: requests.Session, *, domain: str, stratum: str, relaxed: bool
+    session: requests.Session,
+    *,
+    domain: str,
+    stratum: str,
+    candidates: list[IndexRecord],
+    relaxed: bool,
 ) -> None:
-    """Sample articles for one domain and write them to a JSONL file.
+    """Fetch articles for one domain and write them to a JSONL file.
 
     Args:
         session: Session created by ``news_detector.http.build_session``.
         domain: Domain to sample.
         stratum: Sampling stratum of the domain.
+        candidates: Captures from the index, in the order to try them.
         relaxed: When true, do not require article markup in the HTML.
     """
-    rng = random.Random(f"{settings.seed}-{domain}-{settings.crawl_id}")
-    logger.info("%s: start (stratum %s)", domain, stratum)
-    candidates = find_candidates(session, domain=domain, rng=rng)
     to_fetch = candidates[: settings.max_fetch_per_domain]
     if not to_fetch:
         logger.warning("%s: no article candidates found in the index", domain)
@@ -215,19 +217,29 @@ def main() -> None:
     if args.only:
         frame = frame[frame["domain"] == args.only]
 
-    session = build_session()
-    domains = list(zip(frame["domain"], frame["stratum"], strict=True))
-    with tqdm(domains, desc="Domains", unit="dom", position=0) as domain_bar:
-        for raw_domain, raw_stratum in domain_bar:
-            domain, stratum = str(raw_domain), str(raw_stratum)
-            domain_bar.set_postfix_str(domain)
-            if not DOMAIN_PATTERN.match(domain):
-                logger.warning("Skipping invalid domain name: %r", domain)
-                continue
-            if (settings.raw_dir / f"{domain}.jsonl").exists():
-                logger.info("%s: skipping (already fetched)", domain)
-                continue
-            run_domain(session, domain=domain, stratum=stratum, relaxed=args.relaxed)
+    todo: list[tuple[str, str]] = []
+    for raw_domain, raw_stratum in zip(frame["domain"], frame["stratum"], strict=True):
+        domain, stratum = str(raw_domain).strip().lower(), str(raw_stratum)
+        if not DOMAIN_PATTERN.match(domain):
+            logger.warning("Skipping invalid domain name: %r", domain)
+        elif (settings.raw_dir / f"{domain}.jsonl").exists():
+            logger.info("%s: skipping (already fetched)", domain)
+        else:
+            todo.append((domain, stratum))
+
+    if todo:
+        session = build_session()
+        candidates = find_candidates(session, [domain for domain, _ in todo])
+        with tqdm(todo, desc="Domains", unit="dom", position=0) as domain_bar:
+            for domain, stratum in domain_bar:
+                domain_bar.set_postfix_str(domain)
+                run_domain(
+                    session,
+                    domain=domain,
+                    stratum=stratum,
+                    candidates=candidates[domain],
+                    relaxed=args.relaxed,
+                )
     rebuild_meta()
 
 

@@ -14,6 +14,7 @@ wheels/
 
 # Private article texts and tool caches
 data/raw_private/
+data/cache/
 .mypy_cache/
 .ruff_cache/
 data/derived/
