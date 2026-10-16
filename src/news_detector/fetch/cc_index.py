@@ -29,6 +29,8 @@ EXCLUDE_PATTERN = (
 
 PATHS_URL = "{host}/crawl-data/{crawl}/cc-index-table.paths.gz"
 SUBSET_MARKER = "subset=warc/"
+# Sorts after every character that can follow a host in a SURT key (')' and ',')
+SURT_END = "\x7f"
 
 QUERY = """
 WITH wanted AS (SELECT unnest($domains::VARCHAR[]) AS domain),
@@ -45,8 +47,8 @@ hits AS (
     FROM read_parquet($files) AS p
     JOIN wanted AS w
         ON p.url_host_name = w.domain OR ends_with(p.url_host_name, '.' || w.domain)
-    WHERE p.url_host_tld IN (SELECT unnest($tlds::VARCHAR[]))
-        AND p.url_host_registered_domain IN (SELECT unnest($registered::VARCHAR[]))
+    WHERE p.url_host_tld IN ({tlds})
+        AND p.url_host_registered_domain IN ({registered})
         AND p.fetch_status = 200
         AND p.content_mime_detected = 'text/html'
         AND starts_with(p.content_languages, $language)
@@ -69,20 +71,43 @@ class ColumnarIndexError(RuntimeError):
 
 
 class ParquetFile(BaseModel):
-    """A Parquet file of the index with the range of TLDs it contains."""
+    """A Parquet file of the index with the range of URL keys it contains.
+
+    Files are consecutive slices of the index sorted by ``url_surtkey``
+    (``pl,onet)/news``), so a domain lives in one or two files.
+    """
 
     url: str
-    tld_min: str | None
-    tld_max: str | None
+    key_min: str | None
+    key_max: str | None
 
-    def may_contain(self, tld: str) -> bool:
-        """Tell whether the file can hold rows of a TLD (unknown range: yes)."""
-        if self.tld_min is None or self.tld_max is None:
+    def may_contain(self, prefix: str) -> bool:
+        """Tell whether the file can hold hosts starting with a SURT prefix.
+
+        Args:
+            prefix: Reversed host labels, for example ``pl,onet``.
+
+        Returns:
+            True when the prefix falls in the file's key range (unknown: True).
+        """
+        if self.key_min is None or self.key_max is None:
             return True
-        return self.tld_min <= tld <= self.tld_max
+        return self.key_min <= prefix + SURT_END and self.key_max >= prefix
 
 
 _FILES = TypeAdapter(list[ParquetFile])
+
+
+def surt_prefix(domain: str) -> str:
+    """Return the ``url_surtkey`` prefix shared by all hosts of a domain.
+
+    Args:
+        domain: Domain such as ``onet.pl``.
+
+    Returns:
+        Reversed labels joined with commas, for example ``pl,onet``.
+    """
+    return ",".join(reversed(domain.split(".")))
 
 
 def tld_of(domain: str) -> str:
@@ -125,60 +150,71 @@ def _connect() -> duckdb.DuckDBPyConnection:
     return con
 
 
-def _list_parquet_urls(session: requests.Session) -> list[str]:
+def _list_parquet_urls(session: requests.Session, crawl_id: str) -> list[str]:
     response = get(
         session,
-        PATHS_URL.format(host=settings.data_host, crawl=settings.crawl_id),
+        PATHS_URL.format(host=settings.data_host, crawl=crawl_id),
     )
     if response is None:
-        raise ColumnarIndexError(f"Cannot list index files of {settings.crawl_id}")
+        raise ColumnarIndexError(f"Cannot list index files of {crawl_id}")
     paths = gzip.decompress(response.content).decode().split()
     return [f"{settings.data_host}/{p}" for p in paths if SUBSET_MARKER in p]
 
 
-def _read_tld_ranges(
+def _read_key_ranges(
     con: duckdb.DuckDBPyConnection, urls: list[str]
 ) -> list[ParquetFile]:
-    """Read only the Parquet footers (min/max of ``url_host_tld``)."""
+    """Read only the Parquet footers (min/max of ``url_surtkey``)."""
     rows = con.execute(
         """
         SELECT file_name, min(stats_min_value), max(stats_max_value)
         FROM parquet_metadata($files)
-        WHERE path_in_schema = 'url_host_tld'
+        WHERE path_in_schema = 'url_surtkey'
         GROUP BY file_name
         """,
         {"files": urls},
     ).fetchall()
     return [
-        ParquetFile(url=name, tld_min=low, tld_max=high) for name, low, high in rows
+        ParquetFile(url=name, key_min=low, key_max=high) for name, low, high in rows
     ]
 
 
 def _load_files(
-    con: duckdb.DuckDBPyConnection, session: requests.Session
+    con: duckdb.DuckDBPyConnection, session: requests.Session, crawl_id: str
 ) -> list[ParquetFile]:
-    """Return the file layout of the crawl, cached on disk after the first run."""
-    cache = settings.cache_dir / f"parquet_layout_{settings.crawl_id}.json"
+    """Return the file layout of a crawl, cached on disk after the first run."""
+    cache = settings.cache_dir / f"parquet_key_ranges_{crawl_id}.json"
     if cache.exists():
         try:
             return _FILES.validate_json(cache.read_bytes())
         except ValidationError:
             logger.warning("Ignoring corrupt cache %s", cache)
-    logger.info("Reading the layout of the Parquet index (once per crawl, ~20 s)...")
-    files = _read_tld_ranges(con, _list_parquet_urls(session))
+    logger.info(
+        "%s: reading the layout of the Parquet index (once per crawl, %d threads)...",
+        crawl_id,
+        settings.layout_threads,
+    )
+    # Footers are tiny but there are 300 of them, so latency dominates: more
+    # threads help a lot here, while the data query keeps the gentler setting.
+    con.execute(f"SET threads = {settings.layout_threads}")
+    try:
+        files = _read_key_ranges(con, _list_parquet_urls(session, crawl_id))
+    finally:
+        con.execute(f"SET threads = {settings.index_threads}")
     cache.parent.mkdir(parents=True, exist_ok=True)
     cache.write_bytes(_FILES.dump_json(files))
     return files
 
 
 def find_candidates(
-    session: requests.Session, domains: Iterable[str]
+    session: requests.Session, domains: Iterable[str], *, crawl_id: str
 ) -> dict[str, list[IndexRecord]]:
-    """Sample article-like captures for every domain with a single index query.
+    """Sample article-like captures of one crawl for every domain in one query.
 
     Args:
         session: Session created by ``news_detector.fetch.http.build_session``.
         domains: Lower-case domains (subdomains included in the match).
+        crawl_id: Crawl whose index is queried, for example ``CC-MAIN-2020-50``.
 
     Returns:
         For each domain, up to ``settings.max_fetch_per_domain`` unique captures
@@ -192,27 +228,42 @@ def find_candidates(
     if not wanted:
         return result
 
-    tlds = {tld_of(domain) for domain in wanted}
-    registered = set().union(*(registered_candidates(domain) for domain in wanted))
+    tlds = sorted({tld_of(domain) for domain in wanted})
+    registered = sorted(
+        set().union(*(registered_candidates(domain) for domain in wanted))
+    )
+    # Inline IN lists (not subqueries) so DuckDB pushes them down into the Parquet
+    # scan and skips most of each file; the values are still bound parameters.
+    tld_params = {f"t{i}": value for i, value in enumerate(tlds)}
+    registered_params = {f"r{i}": value for i, value in enumerate(registered)}
+    query = QUERY.format(
+        tlds=", ".join(f"${name}" for name in tld_params),
+        registered=", ".join(f"${name}" for name in registered_params),
+    )
     try:
         with closing(_connect()) as con:
-            layout = _load_files(con, session)
-            files = [f.url for f in layout if any(f.may_contain(t) for t in tlds)]
+            layout = _load_files(con, session, crawl_id)
+            prefixes = [surt_prefix(domain) for domain in wanted]
+            files = [
+                f.url
+                for f in layout
+                if any(f.may_contain(prefix) for prefix in prefixes)
+            ]
             logger.info(
-                "Querying %d of %d Parquet files for %d domains (TLDs: %s)...",
+                "%s: querying %d of %d Parquet files for %d domains...",
+                crawl_id,
                 len(files),
                 len(layout),
                 len(wanted),
-                ", ".join(sorted(tlds)),
             )
             started = time.monotonic()
             rows = con.execute(
-                QUERY,
+                query,
                 {
                     "domains": wanted,
                     "files": files,
-                    "tlds": sorted(tlds),
-                    "registered": sorted(registered),
+                    **tld_params,
+                    **registered_params,
                     "language": settings.index_language,
                     "min_path": settings.min_url_path_length,
                     "exclude": EXCLUDE_PATTERN,
@@ -235,7 +286,8 @@ def find_candidates(
             )
         )
     logger.info(
-        "Index query done in %.1fs: %d candidates for %d/%d domains",
+        "%s: index query done in %.1fs: %d candidates for %d/%d domains",
+        crawl_id,
         time.monotonic() - started,
         len(rows),
         sum(1 for records in result.values() if records),

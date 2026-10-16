@@ -59,6 +59,7 @@ class Article(BaseModel):
     warc_offset: int
     warc_length: int
     pub_date: str | None
+    pub_year: int | None = None
     title: str | None
     crawl_timestamp: str | None
     author_present: bool
