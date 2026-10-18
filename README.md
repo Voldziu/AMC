@@ -15,7 +15,8 @@ cp .env.example .env   # optional, every value has a default
 
 `fetch` reads `data/frame/domains.csv`, which you generate first:
 
-1. Put the domains (one per line) in `data/domains.txt`.
+1. Put the domains (one per line) in `data/domains.txt`. Lines starting with
+   `#` are treated as comments.
 2. Run the scripts:
 
 ```bash
