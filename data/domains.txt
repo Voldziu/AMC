@@ -1,32 +1,61 @@
+# Portale ogolnopolskie
 onet.pl
 wp.pl
 interia.pl
 o2.pl
 gazeta.pl
 fakt.pl
-pudelek.pl
-rzeczpospolita.pl
 dziennik.pl
+pap.pl
+tvn24.pl
+rmf24.pl
+polsatnews.pl
+tvp.info
+wyborcza.pl
+rp.pl
+oko.press
+money.pl
+radiozet.pl
 
+# Portale lokalne i regionalne
+tvmalbork.pl
+trojmiasto.pl
+elka.pl
+miedziowe.pl
+24tp.pl
+nowiny24.pl
+dziennikwschodni.pl
+gazetalubuska.pl
+dzienniklodzki.pl
+pomorska.pl
+echodnia.eu
+gs24.pl
+expressilustrowany.pl
+naszemiasto.pl
+epoznan.pl
+24jgora.pl
+elblag.net
 
+# Portale rozrywkowe i plotkarskie
+pudelek.pl
+lelum.pl
+goniec.pl
+
+# Publicystyka i media o wyrazistym profilu
 tvrepublika.pl
+nczas.com
+parezja.pl
+wpolsce24.tv
+niezalezna.pl
+
+# Serwisy alternatywne i konspiracyjne
 dziennik-polityczny.com
 wolnemedia.net
 neon24.pl
 globalna.info
 odkrywamyzakryte.com
-nczas.com
-lelum.pl
-goniec.pl
-parezja.pl
-wpolsce24.tv
+zmianynaziemi.pl
+pikio.pl
 
-
-kobieta.onet.pl
-
-pap.pl
-tvn24.pl
+# Fact-checking
 demagog.org.pl
-niezalezna.pl
-
-tvmalbork.pl

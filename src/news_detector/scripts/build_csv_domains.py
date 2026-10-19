@@ -44,13 +44,17 @@ def load_domains(path: Path) -> list[str]:
     """Read unique, lower-cased domains from a text file, keeping their order.
 
     Args:
-        path: Text file with one domain per line.
+        path: Text file with one domain per line; lines starting with ``#`` are comments.
 
     Returns:
-        Domains without blank lines and duplicates.
+        Domains without blank lines, comments, and duplicates.
     """
     with path.open(encoding="utf-8-sig") as file:
-        domains = (_normalize(line) for line in file)
+        domains = (
+            _normalize(line)
+            for line in file
+            if not line.lstrip().startswith("#")
+        )
         return list(dict.fromkeys(domain for domain in domains if domain))
 
 
