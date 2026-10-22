@@ -1,4 +1,4 @@
-.PHONY: help sync frame domains fetch retry check
+.PHONY: help sync frame domains fetch retry clean-data check
 
 help:  ## show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
@@ -17,6 +17,9 @@ fetch:  ## fetch articles for every year in config/crawls.yaml
 
 retry:  ## also continue domains that ended below the quota
 	uv run python -m news_detector.fetch --retry-incomplete
+
+clean-data:  ## copy only *.jsonl from data/raw_private -> data/clean
+	uv run python -m news_detector.scripts.materilize_jsons
 
 check:  ## ruff + mypy
 	uv run ruff format --check .

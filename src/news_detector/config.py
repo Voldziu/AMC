@@ -154,6 +154,11 @@ class Settings(BaseSettings):
         return self.data_dir / "raw_private" / str(year)
 
     @property
+    def clean_dir(self) -> Path:
+        """Directory with only the JSONL files copied from ``raw_private``."""
+        return self.data_dir / "clean"
+
+    @property
     def derived_dir(self) -> Path:
         """Directory for derived, shareable files."""
         return self.data_dir / "derived"
