@@ -17,6 +17,5 @@ data/raw_private/
 .mypy_cache/
 .ruff_cache/
 data/derived/
-data/processed/
 
 .DS_Store
