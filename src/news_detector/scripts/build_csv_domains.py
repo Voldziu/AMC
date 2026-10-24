@@ -51,9 +51,7 @@ def load_domains(path: Path) -> list[str]:
     """
     with path.open(encoding="utf-8-sig") as file:
         domains = (
-            _normalize(line)
-            for line in file
-            if not line.lstrip().startswith("#")
+            _normalize(line) for line in file if not line.lstrip().startswith("#")
         )
         return list(dict.fromkeys(domain for domain in domains if domain))
 
