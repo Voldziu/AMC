@@ -1,4 +1,4 @@
-.PHONY: help sync frame domains fetch retry clean-data check
+.PHONY: help sync frame domains fetch retry clean-data pipeline test check
 
 help:  ## show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
@@ -20,6 +20,12 @@ retry:  ## also continue domains that ended below the quota
 
 clean-data:  ## copy only *.jsonl from data/raw_private -> data/clean
 	uv run python -m news_detector.scripts.materilize_jsons
+
+pipeline:  ## build stratified train/dev/test CSV files in data/processed
+	uv run python -m news_detector.pipeline
+
+test:  ## run unit and end-to-end tests
+	uv run python -m unittest discover -s tests
 
 check:  ## ruff + mypy
 	uv run ruff format --check .
