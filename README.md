@@ -43,3 +43,23 @@ Results go to `data/raw_private/<year>/` (article texts, git-ignored) and
 `data/derived/meta.csv`. An interrupted run resumes where it stopped.
 
 `make` lists all shortcuts; `make check` runs ruff and mypy.
+
+## Build the training datasets
+
+The dataset pipeline reads every `data/clean/<year>/*.jsonl` file and writes `data/processed/train.csv`, `data/processed/dev.csv`, and `data/processed/test.csv`.
+The default split is 80/10/10 with seed 42 and is stratified by publication year, domain, and source stratum.
+Rows that share an article ID or text hash always stay in the same split.
+
+The output keeps all source fields and adds `label`.
+Articles published in 2020-2022 receive label `0`; articles from 2023-2025 have an empty label for later annotation.
+
+```bash
+make pipeline
+```
+
+The command is deterministic and replaces the three generated CSV files.
+Custom paths, ratios, and seed are available through the module CLI:
+
+```bash
+uv run python -m news_detector.pipeline --help
+```
