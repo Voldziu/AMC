@@ -44,6 +44,14 @@ def _download(name: str) -> Path:
     return path
 
 
+def _read_lines(path: Path) -> list[str]:
+    """Split on ``\\n`` only: ``str.splitlines`` also cuts at U+2028, U+0085 etc."""
+    lines = path.read_bytes().decode("utf-8").split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    return [line.removesuffix("\r") for line in lines]
+
+
 def prepare_sample(size: int = 1000, seed: int = 42, output: Path = SAMPLE_CSV) -> Path:
     """Write a class-balanced sample of the Śmigiel training set.
 
@@ -55,8 +63,8 @@ def prepare_sample(size: int = 1000, seed: int = 42, output: Path = SAMPLE_CSV) 
     Returns:
         The path of the written CSV.
     """
-    texts = _download("data.tsv").read_text(encoding="utf-8").splitlines()
-    labels = _download("labels.tsv").read_text(encoding="utf-8").splitlines()
+    texts = _read_lines(_download("data.tsv"))
+    labels = _read_lines(_download("labels.tsv"))
     if len(texts) != len(labels):
         raise DetectError(f"Śmigiel has {len(texts)} texts but {len(labels)} labels")
 
