@@ -17,5 +17,7 @@ data/raw_private/
 .mypy_cache/
 .ruff_cache/
 data/derived/
+# Third-party datasets with research-only licences (e.g. PolEval Śmigiel)
+data/external/
 
 .DS_Store

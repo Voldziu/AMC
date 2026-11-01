@@ -63,3 +63,18 @@ Custom paths, ratios, and seed are available through the module CLI:
 ```bash
 uv run python -m news_detector.pipeline --help
 ```
+
+## Run the zero-shot detectors
+
+Binoculars and Fast-DetectGPT score every text with a pair of Polish Bielik models.
+They need no training data.
+Thresholds are calibrated on the 2020-2022 articles, which we assume are human-written.
+The step-by-step guide, including running the larger model on a GPU in Google Colab, is in [docs/detektory.md](docs/detektory.md) (in Polish).
+
+```bash
+make detect          # PRESET=bielik-1.5b by default -> data/detect/bielik-1.5b.csv
+make detect-report   # -> data/detect/reports/bielik-1.5b/
+make smigiel         # labelled Polish sanity check (PolEval 2025 Śmigiel)
+```
+
+Scoring needs the optional `detect` dependency group (torch, transformers); see the guide.

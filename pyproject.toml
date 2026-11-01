@@ -36,7 +36,18 @@ plugins = ["pydantic.mypy"]
 module = ["warcio.*"]
 ignore_missing_imports = true
 
+# Installed only with the optional detector dependencies
+[[tool.mypy.overrides]]
+module = ["torch.*", "transformers.*"]
+ignore_missing_imports = true
+
 [dependency-groups]
+detect = [
+    "accelerate>=1.10",
+    "bitsandbytes>=0.48 ; sys_platform == 'linux'",
+    "torch>=2.9",
+    "transformers>=5.0",
+]
 dev = [
     "ipykernel>=7.4.0",
     "matplotlib>=3.11.2",
