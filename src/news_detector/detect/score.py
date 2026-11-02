@@ -13,7 +13,7 @@ import platform
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import torch
 import transformers
@@ -30,6 +30,9 @@ from news_detector.detect.data import DetectError, read_texts
 from news_detector.detect.metrics import SCORE_COLUMNS, score_logits
 from news_detector.detect.models import ModelPair
 from news_detector.utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
 logger = get_logger(__name__)
 
@@ -78,16 +81,19 @@ def _torch_dtype(name: Dtype, device: str) -> torch.dtype:
 
 
 def _load_model(
-    name: str, device: str, dtype: torch.dtype, quantize: Quantize
+    name: str,
+    device: str,
+    dtype: torch.dtype,
+    quantize: Quantize,
 ) -> PreTrainedModel:
     logger.info("Loading %s on %s (%s, quantize=%s)", name, device, dtype, quantize)
     if quantize == "none":
         model = AutoModelForCausalLM.from_pretrained(name, dtype=dtype)
-        model = model.to(device)
+        model = model.to(device)  # type: ignore[arg-type]
     else:
         if not device.startswith("cuda"):
             raise DetectError("8-bit and 4-bit loading needs an NVIDIA GPU")
-        quantization = BitsAndBytesConfig(
+        quantization = BitsAndBytesConfig(  # type: ignore[no-untyped-call]
             load_in_8bit=quantize == "8bit",
             load_in_4bit=quantize == "4bit",
             bnb_4bit_compute_dtype=dtype,
@@ -98,7 +104,7 @@ def _load_model(
             quantization_config=quantization,
             device_map={"": device},
         )
-    model.eval()
+    model.eval()  # type: ignore[no-untyped-call]
     return cast(PreTrainedModel, model)
 
 
@@ -112,25 +118,29 @@ def _load_tokenizer(pair: ModelPair) -> PreTrainedTokenizerBase:
         ):
             raise DetectError(
                 f"{pair.observer} and {pair.performer} tokenize text differently; "
-                "Binoculars needs two models with one shared tokenizer"
+                "Binoculars needs two models with one shared tokenizer",
             )
     if observer.pad_token_id is None:
         observer.pad_token = observer.eos_token
     return cast(PreTrainedTokenizerBase, observer)
 
 
-def _check_meta(meta_path: Path, config: RunConfig) -> None:
+def _check_meta(meta_path: Path, config: "DataclassInstance") -> None:
     if not meta_path.exists():
         return
     stored = json.loads(meta_path.read_text(encoding="utf-8"))["config"]
     if stored != asdict(config):
         raise DetectError(
             f"{meta_path} was written with different settings ({stored}); "
-            "choose another --output or delete the old files"
+            "choose another --output or delete the old files",
         )
 
 
-def _write_meta(meta_path: Path, config: RunConfig, devices: tuple[str, str]) -> None:
+def _write_meta(
+    meta_path: Path,
+    config: "DataclassInstance",
+    devices: tuple[str, str],
+) -> None:
     meta = {
         "config": asdict(config),
         "devices": list(devices),
@@ -149,14 +159,16 @@ def _scored_keys(output: Path) -> set[str]:
 
 
 def _batches(
-    items: list[tuple[str, list[int]]], batch_size: int
+    items: list[tuple[str, list[int]]],
+    batch_size: int,
 ) -> Iterator[list[tuple[str, list[int]]]]:
     for start in range(0, len(items), batch_size):
         yield items[start : start + batch_size]
 
 
 def _pad(
-    batch: list[tuple[str, list[int]]], pad_id: int
+    batch: list[tuple[str, list[int]]],
+    pad_id: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     width = max(len(ids) for _, ids in batch)
     input_ids = torch.full((len(batch), width), pad_id, dtype=torch.long)
@@ -227,7 +239,9 @@ def score_texts(
 
     tokenizer = _load_tokenizer(pair)
     encoded = tokenizer(
-        [texts[key] for key in pending], truncation=True, max_length=max_tokens
+        [texts[key] for key in pending],
+        truncation=True,
+        max_length=max_tokens,
     )["input_ids"]
     # Longest first: an out-of-memory error shows up in the first batch
     items = sorted(
@@ -282,7 +296,7 @@ def score_texts(
                         raise DetectError(
                             f"Non-finite {name} for text {key}; the {config.dtype} "
                             "weights probably overflowed, try --dtype float32 "
-                            "or bfloat16"
+                            "or bfloat16",
                         )
                     record[name] = value
                 writer.writerow(record)

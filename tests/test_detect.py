@@ -19,6 +19,7 @@ from news_detector.detect.report import (
 )
 
 HAS_TORCH = importlib.util.find_spec("torch") is not None
+HAS_PEFT = HAS_TORCH and importlib.util.find_spec("peft") is not None
 
 
 class StatisticsTest(unittest.TestCase):
@@ -62,7 +63,7 @@ def _write_articles(directory: Path) -> list[Path]:
                         "pub_year": year,
                         "label": "0" if year < 2023 else "",
                         "text": f"{split} text {index}",
-                    }
+                    },
                 )
         paths.append(path)
     return paths
@@ -79,16 +80,18 @@ class ReportTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
             inputs = _write_articles(root)
-            rows = []
+            rows: list[dict[str, object]] = []
             for path in inputs:
-                for article in pd.read_csv(path).itertuples():
-                    machine = article.domain == "farm.pl" and article.pub_year >= 2023
+                for article in pd.read_csv(path).to_dict("records"):
+                    machine = (
+                        article["domain"] == "farm.pl" and article["pub_year"] >= 2023
+                    )
                     # Distinct human scores in [1.0, 1.1); machine text scores low
                     rows.append(
                         {
-                            "text_key": text_key(article.text),
+                            "text_key": text_key(article["text"]),
                             "binoculars": 0.5 if machine else 1.0 + len(rows) / 1000,
-                        }
+                        },
                     )
             scores = root / "scores.csv"
             pd.DataFrame(rows).to_csv(scores, index=False)
@@ -98,10 +101,40 @@ class ReportTest(unittest.TestCase):
             calibration = tables["calibration"].iloc[0]
             self.assertEqual(calibration["flag_if"], "below")
             self.assertLessEqual(calibration["fpr_calibration"], 0.05)
-            by_domain = tables["by_domain"].set_index("domain")
-            self.assertEqual(by_domain.loc["farm.pl", "rate_2023_2025"], 1.0)
-            self.assertLess(by_domain.loc["farm.pl", "p_value"], 0.01)
-            self.assertLess(by_domain.loc["paper.pl", "rate_2023_2025"], 0.5)
+            by_domain = tables["by_domain"].set_index("domain").to_dict("index")
+            self.assertEqual(by_domain["farm.pl"]["rate_2023_2025"], 1.0)
+            self.assertLess(by_domain["farm.pl"]["p_value"], 0.01)
+            self.assertLess(by_domain["paper.pl"]["rate_2023_2025"], 0.5)
+
+    def test_scores_of_several_files_are_joined(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            inputs = _write_articles(root)
+            keys = [
+                text_key(article["text"])
+                for path in inputs
+                for article in pd.read_csv(path).to_dict("records")
+            ]
+            first, second = root / "a.csv", root / "b.csv"
+            pd.DataFrame(
+                {"text_key": keys, "n_tokens": 5, "binoculars": range(len(keys))},
+            ).to_csv(first, index=False)
+            pd.DataFrame(
+                {"text_key": keys[:50], "pangram_score": range(50)},
+            ).to_csv(second, index=False)
+
+            tables = build_report([first, second], inputs=inputs, fprs=[0.05])
+
+            calibration = tables["calibration"].set_index("detector").to_dict("index")
+            self.assertEqual(
+                set(calibration),
+                {"binoculars", "pangram_score"},
+            )
+            # Pangram scored only part of the texts; Binoculars keeps all of its own
+            self.assertGreater(
+                calibration["binoculars"]["n_calibration"],
+                calibration["pangram_score"]["n_calibration"],
+            )
 
 
 @unittest.skipUnless(HAS_TORCH, "needs the optional 'detect' dependency group")
@@ -118,7 +151,10 @@ class MetricsTest(unittest.TestCase):
         attention_mask = torch.tensor([[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0]])
 
         scores = score_logits(
-            observer_logits, performer_logits, input_ids, attention_mask
+            observer_logits,
+            performer_logits,
+            input_ids,
+            attention_mask,
         )
 
         for row in range(2):
@@ -143,8 +179,25 @@ class MetricsTest(unittest.TestCase):
             observed = observer[torch.arange(length - 1), targets]
             curvature = float((observed - expected).sum() / variance.sum().sqrt())
             self.assertAlmostEqual(
-                float(scores["fastdetectgpt_observer"][row]), curvature, 5
+                float(scores["fastdetectgpt_observer"][row]),
+                curvature,
+                5,
             )
+
+
+@unittest.skipUnless(HAS_PEFT, "needs the optional 'detect' dependency group")
+class PangramTest(unittest.TestCase):
+    def test_score_is_expected_bucket_scaled_to_unit_range(self) -> None:
+        import torch
+
+        from news_detector.detect.pangram import bucket_scores, prepare_text
+
+        logits = torch.tensor([[0.0, 0.0, 0.0, 0.0], [-50.0, -50.0, 0.0, -50.0]])
+        score, bucket = bucket_scores(logits)
+        self.assertAlmostEqual(float(score[0]), 0.5)
+        self.assertAlmostEqual(float(score[1]), 2 / 3, 5)
+        self.assertEqual(bucket.tolist()[1], 2)
+        self.assertEqual(prepare_text("  Ala\n ma   KOTA "), "ala ma kota")
 
 
 if __name__ == "__main__":

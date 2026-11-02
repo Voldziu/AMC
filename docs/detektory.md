@@ -39,6 +39,23 @@ Presety par modeli są w [src/news_detector/detect/models.py](../src/news_detect
 
 W PolEval 2025 para `bielik-4.5b` dała 79,6% accuracy i była najlepsza z trzech sprawdzonych par.
 
+### Pangram EditLens
+
+Ta sama komenda `score` liczy też trzeci detektor: **Pangram EditLens** (Thai i in., ICLR 2026).
+To nie zero-shot, tylko klasyfikator: Llama-3.2-3B z adapterem LoRA i głową o kilku klasach od 0 (człowiek) do n-1 (AI).
+Wynik to oczekiwana klasa przeskalowana do [0, 1].
+
+| kolumna w `data/detect/pangram.csv` | co to jest | AI, gdy wartość jest |
+|---|---|---|
+| `pangram_score` | oczekiwana klasa, 0 = człowiek, 1 = AI | **wysoka** |
+| `pangram_bucket` | najbardziej prawdopodobna klasa | **wysoka** |
+
+- Plik nie zależy od presetu, więc nie jest liczony drugi raz przy zmianie pary Bielika. `--no-pangram` pomija ten przebieg, `--pangram-output` zmienia ścieżkę.
+- Teksty są przycinane do 1024 tokenów, zapisywane małymi literami i z pojedynczymi spacjami, jak w kodzie autorów.
+- Model był uczony tylko na angielskim, więc na polskich artykułach wynik może być słaby. Sprawdź to na Śmigielu (punkt 4.3).
+- Wymaga zaakceptowania licencji `meta-llama/Llama-3.2-3B` i `pangram/editlens_Llama-3.2-3B` na Hugging Face (punkt 3.1). Licencja adaptera to CC BY-NC-SA 4.0, tylko do użytku niekomercyjnego.
+- `report` i `smigiel-eval` przyjmują kilka plików w `--scores` i łączą je po `text_key`; `make detect-report` i `make smigiel` podają oba.
+
 ## 2. Jak używamy naszych zbiorów
 
 **Czy podział train/dev/test był potrzebny?** Do samego liczenia wyników nie: detektory zero-shot niczego się nie uczą, więc liczymy wynik dla *wszystkich* 5026 tekstów.
@@ -91,6 +108,8 @@ Modele pobieramy z Hugging Face.
    - <https://huggingface.co/speakleash/Bielik-1.5B-v3.0-Instruct>
    - <https://huggingface.co/speakleash/Bielik-4.5B-v3>
    - <https://huggingface.co/speakleash/Bielik-4.5B-v3.0-Instruct>
+   - <https://huggingface.co/meta-llama/Llama-3.2-3B> (Pangram; zatwierdzenie może potrwać)
+   - <https://huggingface.co/pangram/editlens_Llama-3.2-3B> (Pangram)
 
 3. Utwórz token na <https://huggingface.co/settings/tokens>: **Create new token**, typ **Read**.
    Skopiuj go (zaczyna się od `hf_`).
@@ -98,7 +117,7 @@ Modele pobieramy z Hugging Face.
 ### 3.2 Biblioteki do liczenia (opcjonalna grupa `detect`)
 
 ```bash
-uv add --group detect "torch>=2.9" "transformers>=5.0" "accelerate>=1.10" "bitsandbytes>=0.48; sys_platform == 'linux'"
+uv add --group detect "torch>=2.9" "transformers>=5.0" "accelerate>=1.10" "peft>=0.18" "bitsandbytes>=0.48; sys_platform == 'linux'"
 ```
 
 Co robi ta komenda:
@@ -108,6 +127,7 @@ Co robi ta komenda:
   - `torch`: obliczenia, na Macu przez GPU Apple (MPS),
   - `transformers`: pobieranie i uruchamianie modeli,
   - `accelerate`: rozmieszczanie modeli na GPU,
+  - `peft`: wczytanie adaptera LoRA Pangrama,
   - `bitsandbytes`: tylko na Linuksie, do kwantyzacji 8-bitowej w Colabie.
 - Na Macu to około 1 GB.
 - Grupa jest opcjonalna: zwykłe `uv sync` u reszty zespołu dalej jej nie instaluje.

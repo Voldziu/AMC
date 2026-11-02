@@ -1,4 +1,4 @@
-.PHONY: help sync frame domains fetch retry clean-data pipeline detect detect-report smigiel test check
+.PHONY: help sync frame domains fetch retry clean-data pipeline detect detect-pangram detect-report smigiel test check
 
 # Model pair for the detectors: bielik-1.5b (Mac) or bielik-4.5b (GPU)
 PRESET ?= bielik-1.5b
@@ -27,17 +27,22 @@ clean-data:  ## copy only *.jsonl from data/raw_private -> data/clean
 pipeline:  ## build stratified train/dev/test CSV files in data/processed
 	uv run python -m news_detector.pipeline
 
-detect:  ## Binoculars + Fast-DetectGPT scores -> data/detect/$(PRESET).csv
+detect:  ## Binoculars, Fast-DetectGPT -> data/detect/$(PRESET).csv; Pangram -> data/detect/pangram.csv
 	uv run --group detect python -m news_detector.detect score --preset $(PRESET)
 
+detect-pangram:  ## only Pangram -> data/detect/pangram.csv
+	uv run --group detect python -m news_detector.detect score --only-pangram
+
 detect-report:  ## thresholds from 2020-2022, flag rates by year and domain
-	uv run python -m news_detector.detect report --scores data/detect/$(PRESET).csv
+	uv run python -m news_detector.detect report --scores data/detect/$(PRESET).csv data/detect/pangram.csv
 
 smigiel:  ## sanity check on labelled Polish texts (PolEval 2025 Śmigiel)
 	uv run python -m news_detector.detect smigiel-sample
 	uv run --group detect python -m news_detector.detect score --preset $(PRESET) \
-		--input data/external/smigiel/sample.csv --output data/detect/smigiel-$(PRESET).csv
-	uv run python -m news_detector.detect smigiel-eval --scores data/detect/smigiel-$(PRESET).csv
+		--input data/external/smigiel/sample.csv --output data/detect/smigiel-$(PRESET).csv \
+		--pangram-output data/detect/smigiel-pangram.csv
+	uv run python -m news_detector.detect smigiel-eval \
+		--scores data/detect/smigiel-$(PRESET).csv data/detect/smigiel-pangram.csv
 
 test:  ## run unit and end-to-end tests
 	uv run python -m unittest discover -s tests

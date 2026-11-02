@@ -38,13 +38,14 @@ ignore_missing_imports = true
 
 # Installed only with the optional detector dependencies
 [[tool.mypy.overrides]]
-module = ["torch.*", "transformers.*"]
+module = ["torch.*", "transformers.*", "peft.*"]
 ignore_missing_imports = true
 
 [dependency-groups]
 detect = [
     "accelerate>=1.10",
     "bitsandbytes>=0.48 ; sys_platform == 'linux'",
+    "peft>=0.18",
     "torch>=2.9",
     "transformers>=5.0",
 ]

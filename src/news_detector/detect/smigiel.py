@@ -19,7 +19,7 @@ import pandas as pd
 import requests
 
 from news_detector.detect.data import PROJECT_ROOT, DetectError, text_key
-from news_detector.detect.report import DIRECTIONS, threshold_at_fpr
+from news_detector.detect.report import DIRECTIONS, read_scores, threshold_at_fpr
 from news_detector.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -100,7 +100,7 @@ def _auc(machine_score: pd.Series, labels: pd.Series) -> float:
 
 
 def evaluate(
-    scores_path: Path,
+    scores_path: Path | Sequence[Path],
     sample_path: Path = SAMPLE_CSV,
     fprs: Sequence[float] = (0.01, 0.05),
 ) -> pd.DataFrame:
@@ -112,28 +112,31 @@ def evaluate(
     sample = pd.read_csv(sample_path)
     sample["text_key"] = sample["text"].map(text_key)
     data = sample.drop(columns="text").merge(
-        pd.read_csv(scores_path), on="text_key", how="inner"
+        read_scores(scores_path),
+        on="text_key",
+        how="inner",
     )
     if data.empty:
         raise DetectError(f"No text of {sample_path} has a score in {scores_path}")
-    labels = data["label"].astype(int)
 
     rows: list[dict[str, object]] = []
     for detector, direction in DIRECTIONS.items():
         if detector not in data.columns:
             continue
-        machine_score = direction * data[detector]
+        scored = data[detector].notna()
+        labels = data.loc[scored, "label"].astype(int)
+        machine_score = direction * data.loc[scored, detector]
         median = float(machine_score.median())
         row: dict[str, object] = {
             "detector": detector,
-            "n": len(data),
+            "n": len(labels),
             "auc": _auc(machine_score, labels),
             "accuracy_median": float(((machine_score > median) == labels).mean()),
         }
         for fpr in fprs:
             threshold = threshold_at_fpr(machine_score[labels == 0], fpr)
             row[f"recall_at_fpr_{fpr:g}"] = float(
-                (machine_score[labels == 1] > threshold).mean()
+                (machine_score[labels == 1] > threshold).mean(),
             )
         rows.append(row)
     return pd.DataFrame(rows)

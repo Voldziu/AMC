@@ -36,6 +36,7 @@ DIRECTIONS: dict[str, int] = {
     "fastdetectgpt_observer": 1,
     "fastdetectgpt_performer": 1,
     "logppl_observer": -1,
+    "pangram_score": 1,
 }
 DEFAULT_FPRS = (0.01, 0.05)
 CALIBRATION_SPLITS = frozenset({"train", "dev"})
@@ -55,7 +56,10 @@ def wilson_interval(successes: int, total: int, z: float = 1.96) -> tuple[float,
 
 
 def fisher_greater(
-    flagged_after: int, n_after: int, flagged_before: int, n_before: int
+    flagged_after: int,
+    n_after: int,
+    flagged_before: int,
+    n_before: int,
 ) -> float:
     """One-sided Fisher exact test: is the later flag rate higher?"""
     total = n_after + n_before
@@ -93,17 +97,37 @@ def load_articles(inputs: Sequence[Path] = DEFAULT_INPUTS) -> pd.DataFrame:
     return articles.drop(columns="text")
 
 
-def _with_scores(scores_path: Path, articles: pd.DataFrame) -> pd.DataFrame:
-    try:
-        scores = pd.read_csv(scores_path)
-    except (OSError, ValueError) as exc:
-        raise DetectError(f"Cannot read scores {scores_path}: {exc}") from exc
-    merged = articles.merge(scores, on="text_key", how="inner")
+def read_scores(paths: Path | Sequence[Path]) -> pd.DataFrame:
+    """Detector score CSVs joined on ``text_key``; a detector's missing texts are NaN."""
+    if isinstance(paths, Path):
+        paths = [paths]
+    merged: pd.DataFrame | None = None
+    for path in paths:
+        try:
+            scores = pd.read_csv(path)
+        except (OSError, ValueError) as exc:
+            raise DetectError(f"Cannot read scores {path}: {exc}") from exc
+        if merged is None:
+            merged = scores
+        else:
+            # n_tokens counts tokens of that file's own tokenizer
+            scores = scores.drop(columns="n_tokens", errors="ignore")
+            merged = merged.merge(scores, on="text_key", how="outer")
+    if merged is None:
+        raise DetectError("No scores file given")
+    return merged
+
+
+def _with_scores(
+    scores_paths: Path | Sequence[Path],
+    articles: pd.DataFrame,
+) -> pd.DataFrame:
+    merged = articles.merge(read_scores(scores_paths), on="text_key", how="inner")
     missing = len(articles) - len(merged)
     if missing:
         logger.warning("%d articles have no score yet and are left out", missing)
     if merged.empty:
-        raise DetectError(f"No article in the inputs has a score in {scores_path}")
+        raise DetectError(f"No article in the inputs has a score in {scores_paths}")
     return merged
 
 
@@ -125,7 +149,7 @@ def _rate_row(flags: pd.Series) -> dict[str, float | int]:
 
 
 def build_report(
-    scores_path: Path,
+    scores_path: Path | Sequence[Path],
     *,
     inputs: Sequence[Path] = DEFAULT_INPUTS,
     fprs: Sequence[float] = DEFAULT_FPRS,
@@ -133,7 +157,8 @@ def build_report(
     """Compute the calibration, per-year and per-domain tables.
 
     Args:
-        scores_path: CSV written by ``news_detector.detect score``.
+        scores_path: CSV written by ``news_detector.detect score``, or several
+            (e.g. Bielik scores and Pangram scores), joined on ``text_key``.
         inputs: The processed split CSVs (for year, domain and split).
         fprs: Target false positive rates on the 2020-2022 articles.
 
@@ -146,13 +171,16 @@ def build_report(
     year_rows: list[dict[str, object]] = []
     domain_rows: list[dict[str, object]] = []
 
-    calibration_mask = data["human"] & data["split"].isin(CALIBRATION_SPLITS)
-    heldout_mask = data["human"] & (data["split"] == HELDOUT_SPLIT)
-    if not calibration_mask.any():
-        raise DetectError("No scored 2020-2022 article in train/dev to calibrate on")
-
     for detector in detectors:
-        machine_score = DIRECTIONS[detector] * data[detector]
+        # Detectors from separate runs may cover different texts, e.g. a partial run
+        frame = data[data[detector].notna()]
+        calibration_mask = frame["human"] & frame["split"].isin(CALIBRATION_SPLITS)
+        heldout_mask = frame["human"] & (frame["split"] == HELDOUT_SPLIT)
+        if not calibration_mask.any():
+            raise DetectError(
+                f"No scored 2020-2022 article in train/dev to calibrate {detector} on",
+            )
+        machine_score = DIRECTIONS[detector] * frame[detector]
         for fpr in fprs:
             threshold = threshold_at_fpr(machine_score[calibration_mask], fpr)
             flags = machine_score > threshold
@@ -170,21 +198,21 @@ def build_report(
                     "fpr_heldout": heldout["rate"],
                     "fpr_heldout_ci_low": heldout["ci_low"],
                     "fpr_heldout_ci_high": heldout["ci_high"],
-                }
+                },
             )
 
-            for year, index in data.groupby("pub_year").groups.items():
+            for year, index in frame.groupby("pub_year").groups.items():
                 year_rows.append(
                     {
                         **base,
                         "pub_year": year,
                         **_rate_row(flags[index]),
-                        "median_score": float(data.loc[index, detector].median()),
-                    }
+                        "median_score": float(frame.loc[index, detector].median()),
+                    },
                 )
 
             rows = []
-            for (domain, stratum), group in data.groupby(["domain", "stratum"]):
+            for (domain, stratum), group in frame.groupby(["domain", "stratum"]):
                 before = flags[group.index[group["human"]]]
                 after = flags[group.index[~group["human"]]]
                 flagged_before, flagged_after = int(before.sum()), int(after.sum())
@@ -201,23 +229,27 @@ def build_report(
                         "rate_2023_2025": after.mean() if len(after) else math.nan,
                         "p_value": (
                             fisher_greater(
-                                flagged_after, len(after), flagged_before, len(before)
+                                flagged_after,
+                                len(after),
+                                flagged_before,
+                                len(before),
                             )
                             if len(before) and len(after)
                             else math.nan
                         ),
-                    }
+                    },
                 )
             table = pd.DataFrame(rows)
             table["excess"] = table["rate_2023_2025"] - table["rate_2020_2022"]
             tested = table["p_value"].notna()
             table.loc[tested, "q_value"] = benjamini_hochberg(
-                table.loc[tested, "p_value"]
+                table.loc[tested, "p_value"],
             )
             domain_rows.extend(cast(list[dict[str, object]], table.to_dict("records")))
 
     by_domain = pd.DataFrame(domain_rows).sort_values(
-        ["detector", "target_fpr", "excess"], ascending=[True, True, False]
+        ["detector", "target_fpr", "excess"],
+        ascending=[True, True, False],
     )
     return {
         "calibration": pd.DataFrame(calibration_rows),

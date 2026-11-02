@@ -77,7 +77,11 @@ make detect-report   # -> data/detect/reports/bielik-1.5b/
 make smigiel         # labelled Polish sanity check (PolEval 2025 Śmigiel)
 ```
 
-Scoring needs the optional `detect` dependency group (torch, transformers); see the guide.
+Scoring needs the optional `detect` dependency group (torch, transformers, peft); see the guide.
+
+`detect score` also runs Pangram's EditLens classifier (Llama-3.2-3B + LoRA adapter, English-only, CC BY-NC-SA) and writes `data/detect/pangram.csv`, independent of the preset.
+Both models are gated on Hugging Face: accept their licences first.
+Use `--no-pangram` to skip it.
 
 The comparison of the detectors and models (Śmigiel check, placebo test, per-year and per-domain results, power, candidates for manual review) is in `src/notebooks/detect-compare.ipynb`.
 It only reads the files in `data/detect/`, so it needs no GPU.
