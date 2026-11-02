@@ -1,0 +1,9 @@
+detector,target_fpr,threshold,flag_if,n_calibration,fpr_calibration,n_heldout,fpr_heldout,fpr_heldout_ci_low,fpr_heldout_ci_high
+binoculars,0.01,0.83036,below,2559,0.00976944,288,0,0,0.0131633
+binoculars,0.05,0.875751,below,2559,0.0496288,288,0.0381944,0.0214585,0.0670881
+fastdetectgpt_observer,0.01,2.36993,above,2559,0.00976944,288,0,0,0.0131633
+fastdetectgpt_observer,0.05,1.61442,above,2559,0.0496288,288,0.0520833,0.0318137,0.0841451
+fastdetectgpt_performer,0.01,-0.449219,above,2559,0.00976944,288,0.00347222,0.00061318,0.0194032
+fastdetectgpt_performer,0.05,-1.2595,above,2559,0.0496288,288,0.0590278,0.0371769,0.092488
+logppl_observer,0.01,0.81145,below,2559,0.00976944,288,0.0173611,0.00743774,0.0399907
+logppl_observer,0.05,1.35999,below,2559,0.0496288,288,0.0590278,0.0371769,0.092488
