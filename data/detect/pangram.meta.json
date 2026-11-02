@@ -7,10 +7,10 @@
     "quantize": "none"
   },
   "devices": [
-    "mps",
-    "mps"
+    "cuda:0",
+    "cuda:0"
   ],
-  "torch": "2.15.0",
+  "torch": "2.15.0+cu132",
   "transformers": "5.22.1",
-  "python": "3.12.10"
+  "python": "3.12.3"
 }
