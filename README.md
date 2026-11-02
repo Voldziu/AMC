@@ -78,3 +78,6 @@ make smigiel         # labelled Polish sanity check (PolEval 2025 Śmigiel)
 ```
 
 Scoring needs the optional `detect` dependency group (torch, transformers); see the guide.
+
+The comparison of the detectors and models (Śmigiel check, placebo test, per-year and per-domain results, power, candidates for manual review) is in `src/notebooks/detect-compare.ipynb`.
+It only reads the files in `data/detect/`, so it needs no GPU.
