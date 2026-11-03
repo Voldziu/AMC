@@ -83,5 +83,5 @@ Scoring needs the optional `detect` dependency group (torch, transformers, peft)
 Both models are gated on Hugging Face: accept their licences first.
 Use `--no-pangram` to skip it.
 
-The comparison of the detectors and models (Śmigiel check, placebo test, per-year and per-domain results, power, candidates for manual review) is in `src/notebooks/detect-compare.ipynb`.
+The comparison of the detectors and models (Śmigiel check, placebo test, per-year and per-domain results, power, threshold-free comparison, Pangram analyses, candidates for manual review) is in `src/notebooks/detect-compare.ipynb`.
 It only reads the files in `data/detect/`, so it needs no GPU.
