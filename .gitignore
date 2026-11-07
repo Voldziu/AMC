@@ -20,5 +20,6 @@ data/derived/
 # Third-party datasets with research-only licences (e.g. PolEval Śmigiel)
 data/external/
 
-data/processed/
+data/processed/*
+!data/processed/.gitkeep
 .DS_Store
