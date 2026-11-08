@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 import yaml
 from pydantic import (
     Field,
+    SecretStr,
     StringConstraints,
     TypeAdapter,
     ValidationError,
@@ -98,6 +99,23 @@ class Settings(BaseSettings):
     html_sniff_chars: int = Field(default=300_000, ge=1)
     seed: int = 42
 
+    # Detectors (observer/performer: Binoculars pair; Fast-DetectGPT uses the observer)
+    observer_model: str = "speakleash/Bielik-4.5B-v3"
+    performer_model: str = "speakleash/Bielik-4.5B-v3.0-Instruct"
+    detect_max_tokens: int = Field(default=512, ge=1)
+    detect_batch_size: int = Field(default=4, ge=1)
+    detect_device: str = "auto"
+
+    # Gold standard: AI rewrites through the OpenAI chat completions API
+    openai_api_key: SecretStr = SecretStr("")
+    openai_model: str = "gpt-4.1-mini"
+    openai_temperature: float = Field(default=0.7, ge=0, le=2)
+    openai_max_output_tokens: int = Field(default=2048, ge=1)
+    openai_timeout_seconds: float = Field(default=120.0, gt=0)
+    # USD per million tokens, used only for the cost estimate
+    openai_price_input_per_m: float = Field(default=0.4, ge=0)
+    openai_price_output_per_m: float = Field(default=1.6, ge=0)
+
     # Paths
     data_dir: Path = PROJECT_ROOT / "data"
     # YAML mapping publication year -> crawl id
@@ -162,6 +180,26 @@ class Settings(BaseSettings):
     def derived_dir(self) -> Path:
         """Directory for derived, shareable files."""
         return self.data_dir / "derived"
+
+    @property
+    def gold_private_dir(self) -> Path:
+        """Directory with gold-standard texts (git-ignored)."""
+        return self.data_dir / "raw_private" / "gold"
+
+    @property
+    def gold_derived_dir(self) -> Path:
+        """Directory with gold-standard review sheets (no text)."""
+        return self.derived_dir / "gold"
+
+    @property
+    def gold_exclusions_file(self) -> Path:
+        """CSV of G1 articles removed by hand after reading them."""
+        return PROJECT_ROOT / "config" / "g1_exclusions.csv"
+
+    @property
+    def scores_dir(self) -> Path:
+        """Directory with detector scores (ids and numbers only)."""
+        return self.derived_dir / "scores"
 
     @property
     def meta_csv(self) -> Path:
