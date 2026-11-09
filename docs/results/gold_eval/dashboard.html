@@ -1,0 +1,489 @@
+<meta name="dash-one-writer">
+<style>
+.gs { display: flex; flex-direction: column; gap: var(--cds-gap-xl); max-width: 76rem; margin-inline: auto; font-family: var(--font-anthropic-sans); }
+.gs h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.gs h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.gs p { margin: 0; }
+.gs .lede { font-size: var(--cds-font-size-heading); line-height: 1.45; max-width: 52rem; margin-top: var(--cds-gap-sm); }
+.gs .note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.5; max-width: 52rem; }
+.gs b { font-weight: var(--cds-font-weight-medium); }
+.gs .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-md); min-width: 0; }
+.gs .card-head { display: flex; flex-direction: column; gap: 0.25rem; }
+.gs .bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; }
+.gs .seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.gs button { font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg); background: transparent; border: 0; padding: 0.4rem 0.75rem; cursor: pointer; }
+.gs .seg button + button { border-left: 1px solid var(--color-border-line); }
+.gs button[aria-pressed=true] { background: var(--color-fg); color: var(--color-bg); }
+.gs button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: -2px; }
+.gs .ghost { border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
+.gs .tablebox { overflow-x: auto; }
+.gs table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: var(--cds-font-size-body); }
+.gs th { text-align: right; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.gs td { text-align: right; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.gs th:first-child, .gs td:first-child { text-align: left; }
+.gs tr:last-child td { border-bottom: 0; }
+.gs .jcell { display: inline-flex; align-items: center; gap: 0.5rem; justify-content: flex-end; }
+.gs .jbar { width: 4.5rem; height: 0.5rem; background: var(--cds-chart-grid); border-radius: 0.25rem; position: relative; overflow: hidden; }
+.gs .jbar i { position: absolute; inset: 0 auto 0 0; background: var(--cds-chart-muted); }
+.gs .jbar.pass i { background: var(--color-ok); }
+.gs .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 1rem; font-size: var(--cds-font-size-caption); border: 1px solid var(--color-border-line); }
+.gs .pill.pass { color: var(--color-ok); }
+.gs .pill.fail { color: var(--color-bad); }
+.gs .cmgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--cds-gap-md); }
+.gs .cm { display: flex; flex-direction: column; gap: 0.5rem; }
+.gs .cm-title { font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); display: flex; align-items: center; gap: 0.4rem; }
+.gs .sw { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none; }
+.gs .cm-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 3px; font-variant-numeric: tabular-nums; }
+.gs .cm-h { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.15rem; }
+.gs .cm-c { border-radius: calc(var(--cds-radius) / 2); padding: 0.55rem 0.4rem; text-align: center; background: var(--cds-chart-grid); }
+.gs .cm-c b { display: block; font-size: var(--cds-font-size-heading); }
+.gs .cm-c span { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs .cm.big .cm-c { padding: 1rem 0.5rem; }
+.gs .cm.big .cm-c b { font-size: var(--cds-font-size-title); font-family: var(--font-anthropic-serif); font-weight: 400; }
+.gs .legend { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.gs .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.gs .chart { position: relative; min-height: 14rem; }
+.gs svg { display: block; max-width: 100%; }
+.gs svg text { fill: var(--color-fg-muted); font-size: 11px; font-family: var(--font-anthropic-sans); }
+.gs .tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 2; }
+.gs .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.gs .slider { display: flex; flex-direction: column; gap: 0.4rem; }
+.gs .slider input { width: 100%; accent-color: var(--color-fg); }
+.gs .thr { font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
+.gs dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--cds-gap-md); margin: 0; }
+.gs dl div { display: flex; flex-direction: column; gap: 0.1rem; }
+.gs dt { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); order: 2; line-height: 1.35; }
+.gs dd { margin: 0; font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.gs details { border-top: 1px solid var(--color-border-line); padding-top: var(--cds-gap-md); }
+.gs summary { cursor: pointer; font-weight: var(--cds-font-weight-medium); }
+.gs details dl { grid-template-columns: 1fr; gap: 0.6rem; margin-top: var(--cds-gap-md); }
+.gs details dl div { flex-direction: column; }
+.gs details dt { order: 0; color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.gs details dd { font-family: var(--font-anthropic-sans); font-size: var(--cds-font-size-body); color: var(--color-fg-muted); line-height: 1.5; }
+.gs .pos { color: var(--color-fg); }
+</style>
+
+<div class="gs">
+  <header>
+    <h1>Jakość detektorów na gold standardzie</h1>
+    <p class="lede">Na zbiorze testowym najlepiej wypada <b data-draw="best-name">—</b> (statystyka Youdena J = <b data-draw="best-j">—</b>). Regułę stopu, J ≥ <span data-draw="stop-j">—</span>, spełnia <b data-draw="pass-n">—</b> z <b data-draw="det-n">—</b> detektorów.</p>
+    <p class="note" style="margin-top: var(--cds-gap-sm)">Zbiór: <span data-draw="n-human">—</span> tekstów ludzkich z roku 2020 (G1) i <span data-draw="n-ai">—</span> ich przeróbek wykonanych przez model językowy (G2), z <span data-draw="n-dom">—</span> domen. Domeny podzielono losowo na dev (wybór progu) i test (jednorazowy odczyt): <span data-draw="split-n">—</span>.</p>
+  </header>
+
+  <div class="bar">
+    <span class="note">Zbiór do oceny:</span>
+    <div class="seg" role="group" aria-label="Zbiór do oceny">
+      <button type="button" class="gs-split" data-split="test" aria-pressed="true">Test</button>
+      <button type="button" class="gs-split" data-split="dev" aria-pressed="false">Dev</button>
+      <button type="button" class="gs-split" data-split="all" aria-pressed="false">Całość</button>
+    </div>
+    <span class="note">Próg każdego detektora jest zamrożony na dev (maksimum J), a potem tylko stosowany.</span>
+  </div>
+
+  <section class="card" id="porownanie">
+    <div class="card-head">
+      <h2>Porównanie detektorów</h2>
+      <p class="note">Czułość to udział przeróbek AI oznaczonych jako AI. Swoistość to udział tekstów ludzkich oznaczonych jako ludzkie. Przedział ufności 95% pochodzi z bootstrapu po domenach, liczonego na całości zbioru.</p>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Detektor</th><th>AUC</th><th>AUC, 95% CI</th><th>Próg</th><th>Czułość</th><th>Swoistość</th><th>J</th><th>J, 95% CI</th><th>Reguła stopu</th></tr></thead>
+        <tbody data-draw="cmp-body" data-source="scores"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="macierze">
+    <div class="card-head">
+      <h2>Macierze pomyłek</h2>
+      <p class="note">Wiersze: prawdziwa klasa. Kolumny: decyzja detektora przy zamrożonym progu. Zielone pola to trafne decyzje, czerwone to pomyłki; intensywność pokazuje udział w wierszu.</p>
+    </div>
+    <div class="cmgrid" data-draw="cm-grid" data-source="scores"></div>
+  </section>
+
+  <div class="two">
+    <section class="card" id="roc">
+      <div class="card-head">
+        <h2>Krzywe ROC</h2>
+        <p class="note">Każdy punkt to jeden możliwy próg. Kropka oznacza zamrożony próg z dev. Przekątna to losowanie.</p>
+      </div>
+      <div class="chart" data-draw="roc" data-source="scores"></div>
+    </section>
+    <section class="card" id="pary">
+      <div class="card-head">
+        <h2>Przeróbka kontra oryginał</h2>
+        <p class="note">W jakim odsetku par przeróbka dostaje wynik bardziej „maszynowy” niż oryginał. Losowanie to 50%. Nie zależy od progu.</p>
+      </div>
+      <div class="chart" data-draw="pairs" data-source="scores"></div>
+    </section>
+  </div>
+
+  <section class="card" id="prog">
+    <div class="card-head">
+      <h2>Ruchomy próg</h2>
+      <p class="note">Wybierz detektor i przesuń próg. Suwak ustawia udział wszystkich tekstów oznaczonych jako AI, a macierz i metryki liczą się od nowa na wybranym zbiorze.</p>
+    </div>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="Detektor">
+        <button type="button" class="gs-det" data-det="pangram" aria-pressed="true">Pangram</button>
+        <button type="button" class="gs-det" data-det="logppl_observer" aria-pressed="false">logppl</button>
+        <button type="button" class="gs-det" data-det="binoculars" aria-pressed="false">Binoculars</button>
+        <button type="button" class="gs-det" data-det="fdgpt_performer" aria-pressed="false">FDGPT perf.</button>
+        <button type="button" class="gs-det" data-det="fdgpt_observer" aria-pressed="false">FDGPT obs.</button>
+      </div>
+    </div>
+    <div class="slider">
+      <label for="gs-q" class="note">Udział tekstów oznaczonych jako AI</label>
+      <input id="gs-q" type="range" min="0" max="100" step="0.5" value="50">
+      <div class="bar"><span class="thr" data-draw="ex-thr" data-source="scores">—</span><button type="button" class="ghost" id="gs-reset">Przywróć próg z dev</button></div>
+    </div>
+    <div class="two">
+      <div class="cm big" data-draw="ex-cm" data-source="scores"></div>
+      <div class="chart" data-draw="ex-hist" data-source="scores"></div>
+    </div>
+    <dl data-draw="ex-metrics" data-source="scores"></dl>
+  </section>
+
+  <details>
+    <summary>Definicje i ograniczenia</summary>
+    <dl>
+      <div><dt>Gold standard</dt><dd>G1 to teksty ludzkie sprzed ery LLM, mierzą swoistość. G2 to ich przeróbki wykonane przez model językowy (tryb „rewrite_strong”, jeden generator), mierzą czułość. Każda przeróbka ma swój oryginał, stąd analiza par.</dd></div>
+      <div><dt>Próg i podział</dt><dd>Domeny dzielone są na dev i test funkcją skrótu z ziarnem, więc tekst-źródło i jego przeróbka zawsze trafiają do tej samej połowy. Próg maksymalizuje J = czułość + swoistość − 1 na dev. Test odczytujemy po jego zamrożeniu.</dd></div>
+      <div><dt>AUC</dt><dd>Prawdopodobieństwo, że losowy tekst AI dostanie wyższy wynik niż losowy tekst ludzki. 0,5 oznacza losowanie. Binoculars zamieniono na wynik odwrócony, żeby wyższa wartość zawsze znaczyła „bardziej maszynowy”.</dd></div>
+      <div><dt>Precyzja, F1, MCC</dt><dd>Precyzja zależy od proporcji klas, a tu klasy są równe, więc nie odpowiada udziałowi AI w prawdziwym korpusie. Do szacowania udziału AI w domenach używa się czułości i swoistości z korektą Rogan–Gladena.</dd></div>
+      <div><dt>Ograniczenia</dt><dd>Zbiór jest mały i z jednego roku, a przeróbki pochodzą z jednego generatora. Przeróbka istniejącego artykułu to inny typ tekstu niż treść generowana od zera na farmie treści. Modele Binoculars i Fast-DetectGPT działały tu na najmniejszym wariancie Bielika. Pangram EditLens był trenowany na tekstach angielskich. Wyniki opisują ten zbiór i nie dowodzą, że domena publikuje tekst generowany.</dd></div>
+    </dl>
+  </details>
+</div>
+
+<script>
+(function () {
+  const STOP = 0.2, NBOOT = 1000, SEED = 42, BINS = 20;
+  const S = { split: 'test', det: 'pangram', q: null };
+  let cache = null, cacheKey = null;
+  const fmtN = new Intl.NumberFormat('pl', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtP = new Intl.NumberFormat('pl', { style: 'percent', maximumFractionDigits: 0 });
+  const f2 = (x) => (Number.isFinite(x) ? fmtN.format(x) : '—');
+  const f3 = (x) => (Number.isFinite(x) ? x.toLocaleString('pl', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '—');
+  const pc = (x) => (Number.isFinite(x) ? fmtP.format(x) : '—');
+
+  const sel = (items, split) => (split === 'all' ? items : items.filter((i) => i.split === split));
+  const isAi = (i) => i.label === 'ai';
+
+  function auc(items) {
+    const pos = items.filter(isAi).length, neg = items.length - pos;
+    if (!pos || !neg) return NaN;
+    const a = items.map((i) => ({ s: i.s, y: isAi(i) })).sort((x, y) => x.s - y.s);
+    let sum = 0, i = 0;
+    while (i < a.length) {
+      let j = i;
+      while (j + 1 < a.length && a[j + 1].s === a[i].s) j++;
+      const r = (i + j) / 2 + 1;
+      for (let k = i; k <= j; k++) if (a[k].y) sum += r;
+      i = j + 1;
+    }
+    return (sum - (pos * (pos + 1)) / 2) / (pos * neg);
+  }
+  function conf(items, t) {
+    let tp = 0, fn = 0, fp = 0, tn = 0;
+    for (const i of items) {
+      const flag = i.s >= t;
+      if (isAi(i)) flag ? tp++ : fn++;
+      else flag ? fp++ : tn++;
+    }
+    return { tp, fn, fp, tn };
+  }
+  function met(c) {
+    const P = c.tp + c.fn, N = c.fp + c.tn;
+    const sens = c.tp / P, spec = c.tn / N;
+    const mcc = (c.tp * c.tn - c.fp * c.fn) / Math.sqrt((c.tp + c.fp) * (c.tp + c.fn) * (c.tn + c.fp) * (c.tn + c.fn));
+    return { sens, spec, j: sens + spec - 1, ppv: c.tp / (c.tp + c.fp), f1: (2 * c.tp) / (2 * c.tp + c.fp + c.fn), acc: (c.tp + c.tn) / (P + N), bacc: (sens + spec) / 2, mcc, P, N };
+  }
+  function youden(items) {
+    const ts = [...new Set(items.map((i) => i.s))].sort((a, b) => a - b);
+    let best = { t: NaN, j: -Infinity };
+    for (const t of ts) {
+      const j = met(conf(items, t)).j;
+      if (j > best.j) best = { t, j };
+    }
+    return best;
+  }
+  function rocPoints(items) {
+    const ts = [...new Set(items.map((i) => i.s))].sort((a, b) => b - a);
+    const pts = [{ f: 0, t: 0 }];
+    for (const t of ts) {
+      const c = conf(items, t);
+      pts.push({ f: c.fp / (c.fp + c.tn), t: c.tp / (c.tp + c.fn) });
+    }
+    return pts;
+  }
+  function mulberry(a) {
+    return function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const quant = (arr, p) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(p * (arr.length - 1))))];
+  function boot(D) {
+    if (D.boot) return D.boot;
+    const doms = [...new Set(D.items.map((i) => i.domain))];
+    const byd = new Map(doms.map((d) => [d, D.items.filter((i) => i.domain === d)]));
+    const rnd = mulberry(SEED);
+    const a = [], j = [];
+    for (let b = 0; b < NBOOT; b++) {
+      let items = [];
+      for (let k = 0; k < doms.length; k++) items = items.concat(byd.get(doms[Math.floor(rnd() * doms.length)]));
+      const A = auc(items);
+      if (!Number.isNaN(A)) { a.push(A); j.push(met(conf(items, D.thr)).j); }
+    }
+    a.sort((x, y) => x - y); j.sort((x, y) => x - y);
+    D.boot = { auc: [quant(a, 0.025), quant(a, 0.975)], j: [quant(j, 0.025), quant(j, 0.975)] };
+    return D.boot;
+  }
+  function pairShare(D) {
+    const hum = new Map(D.items.filter((i) => !isAi(i)).map((i) => [i.pair, i.s]));
+    const ai = D.items.filter((i) => isAi(i) && hum.has(i.pair));
+    return { share: ai.filter((i) => i.s > hum.get(i.pair)).length / ai.length, n: ai.length };
+  }
+  function model() {
+    const d = dash.data('scores');
+    if (d.status !== 'ok' || !d.data.length) return null;
+    if (cacheKey === d.data) return cache;
+    const by = new Map();
+    for (const r of d.data) {
+      if (!by.has(r.detector)) by.set(r.detector, { id: r.detector, name: r.detector_name, items: [] });
+      by.get(r.detector).items.push({ label: r.label, domain: r.domain, split: r.split, pair: r.pair_id, s: Number(r.score) });
+    }
+    const dets = [...by.values()];
+    dets.forEach((D, k) => {
+      D.k = k;
+      D.thr = youden(D.items.filter((i) => i.split === 'dev')).t;
+      D.pairs = pairShare(D);
+    });
+    cache = { dets, by };
+    cacheKey = d.data;
+    return cache;
+  }
+  const color = (D) => dash.colors[D.k % dash.colors.length];
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const blank = (el) => { el.replaceChildren(); };
+
+  function evalDet(D, split, t = D.thr) {
+    const items = sel(D.items, split);
+    return { items, c: conf(items, t), m: met(conf(items, t)), auc: auc(items) };
+  }
+  const ranked = (M) => M.dets.map((D) => ({ D, e: evalDet(D, 'test') })).sort((a, b) => b.e.m.j - a.e.m.j);
+
+  // ---- header text ----
+  const text = (name, fn) => dash.draw(name, (el) => { const M = model(); if (!M) { el.textContent = '—'; return; } el.textContent = fn(M); });
+  text('best-name', (M) => ranked(M)[0].D.name);
+  text('best-j', (M) => f2(ranked(M)[0].e.m.j));
+  text('stop-j', () => f2(STOP));
+  text('pass-n', (M) => String(ranked(M).filter((r) => r.e.m.j >= STOP).length));
+  text('det-n', (M) => String(M.dets.length));
+  text('n-human', (M) => String(M.dets[0].items.filter((i) => !isAi(i)).length));
+  text('n-ai', (M) => String(M.dets[0].items.filter(isAi).length));
+  text('n-dom', (M) => String(new Set(M.dets[0].items.map((i) => i.domain)).size));
+  text('split-n', (M) => {
+    const part = (s) => { const it = sel(M.dets[0].items, s); return `${it.filter((i) => !isAi(i)).length} + ${it.filter(isAi).length}`; };
+    return `dev ${part('dev')} tekstów (ludzkie + AI), test ${part('test')}`;
+  });
+
+  // ---- comparison table ----
+  dash.draw('cmp-body', (el) => {
+    const M = model(); if (!M) { blank(el); return; }
+    const rows = M.dets.map((D) => {
+      const e = evalDet(D, S.split), b = boot(D);
+      const tr = mk('tr');
+      const nameCell = mk('td'); const sw = mk('span', 'sw'); sw.style.background = color(D); sw.style.display = 'inline-block'; sw.style.marginRight = '0.5rem';
+      nameCell.append(sw, document.createTextNode(D.name));
+      const pass = e.m.j >= STOP;
+      const jc = mk('td'); const w = mk('span', 'jcell'); const bar = mk('span', 'jbar' + (pass ? ' pass' : '')); const fill = mk('i'); fill.style.width = `${Math.max(0, Math.min(1, e.m.j)) * 100}%`; bar.append(fill);
+      w.append(bar, document.createTextNode(f2(e.m.j))); jc.append(w);
+      const verdict = mk('td'); verdict.append(mk('span', 'pill ' + (pass ? 'pass' : 'fail'), pass ? 'przechodzi' : 'wynik negatywny'));
+      tr.append(nameCell, mk('td', '', f3(e.auc)), mk('td', '', `${f3(b.auc[0])} – ${f3(b.auc[1])}`), mk('td', '', f3(D.thr)), mk('td', '', pc(e.m.sens)), mk('td', '', pc(e.m.spec)), jc, mk('td', '', `${f2(b.j[0])} – ${f2(b.j[1])}`), verdict);
+      return tr;
+    });
+    el.replaceChildren(...rows);
+  });
+
+  // ---- confusion matrices ----
+  function matrix(c, big) {
+    const g = mk('div', 'cm-grid');
+    const P = c.tp + c.fn, N = c.fp + c.tn;
+    g.append(mk('div', 'cm-h'), mk('div', 'cm-h', 'oznaczone AI'), mk('div', 'cm-h', 'oznaczone ludzkie'));
+    const cell = (n, tot, good, tag, label) => {
+      const d = mk('div', 'cm-c');
+      const share = tot ? n / tot : 0;
+      d.style.background = `color-mix(in srgb, var(${good ? '--color-ok' : '--color-bad'}) ${Math.round(share * 55)}%, var(--cds-chart-grid))`;
+      d.append(mk('b', '', String(n)), mk('span', '', big ? `${label}: ${pc(share)} wiersza` : `${tag} · ${pc(share)}`));
+      return d;
+    };
+    g.append(mk('div', 'cm-h', 'tekst AI'), cell(c.tp, P, true, 'TP', 'trafnie AI'), cell(c.fn, P, false, 'FN', 'pominięte AI'));
+    g.append(mk('div', 'cm-h', 'tekst ludzki'), cell(c.fp, N, false, 'FP', 'fałszywy alarm'), cell(c.tn, N, true, 'TN', 'trafnie ludzki'));
+    return g;
+  }
+  dash.draw('cm-grid', (el) => {
+    const M = model(); if (!M) { blank(el); return; }
+    el.replaceChildren(...M.dets.map((D) => {
+      const wrap = mk('div', 'cm'); const t = mk('div', 'cm-title'); const sw = mk('span', 'sw'); sw.style.background = color(D);
+      t.append(sw, document.createTextNode(D.name));
+      wrap.append(t, matrix(evalDet(D, S.split).c, false));
+      return wrap;
+    }));
+  });
+
+  // ---- shared chart helpers ----
+  function frame(el, h, m) {
+    const w = Math.max(260, el.clientWidth || 520);
+    const svg = d3.create('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img');
+    return { svg, w, h, iw: w - m.l - m.r, ih: h - m.t - m.b, g: svg.append('g').attr('transform', `translate(${m.l},${m.t})`) };
+  }
+  function styleAxis(g) {
+    g.selectAll('text').attr('font-size', null).attr('font-family', null);
+    g.selectAll('path,line').attr('stroke', 'var(--cds-chart-axis)');
+  }
+  function tipFor(el) {
+    const tip = mk('div', 'tip'); tip.hidden = true;
+    return {
+      node: tip,
+      show(html, x, y) { tip.textContent = html; tip.hidden = false; const w = el.clientWidth; tip.style.left = `${Math.min(Math.max(0, x + 12), Math.max(0, w - tip.offsetWidth))}px`; tip.style.top = `${Math.max(0, y - 34)}px`; },
+      hide() { tip.hidden = true; },
+    };
+  }
+
+  // ---- ROC ----
+  dash.draw('roc', (el) => {
+    const M = model(); if (!M) { blank(el); return; }
+    const m = { l: 44, r: 14, t: 10, b: 38 };
+    const F = frame(el, Math.min(380, Math.max(260, (el.clientWidth || 520) * 0.85)), m);
+    const x = d3.scaleLinear([0, 1], [0, F.iw]), y = d3.scaleLinear([0, 1], [F.ih, 0]);
+    F.g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')).tickSize(-F.iw)).call((g) => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', 'var(--cds-chart-grid)'); g.selectAll('text').attr('font-size', null).attr('font-family', null); });
+    const ax = F.g.append('g').attr('transform', `translate(0,${F.ih})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.format('.0%'))); styleAxis(ax);
+    F.g.append('text').attr('x', F.iw / 2).attr('y', F.ih + 32).attr('text-anchor', 'middle').text('Odsetek fałszywych alarmów (1 − swoistość)');
+    F.g.append('text').attr('transform', 'rotate(-90)').attr('x', -F.ih / 2).attr('y', -34).attr('text-anchor', 'middle').text('Czułość');
+    F.g.append('line').attr('x1', x(0)).attr('y1', y(0)).attr('x2', x(1)).attr('y2', y(1)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+    const line = d3.line().x((p) => x(p.f)).y((p) => y(p.t));
+    const tip = tipFor(el);
+    for (const D of M.dets) {
+      const e = evalDet(D, S.split);
+      F.g.append('path').attr('d', line(rocPoints(e.items))).attr('fill', 'none').attr('stroke', color(D)).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+      const dot = F.g.append('circle').attr('cx', x(1 - e.m.spec)).attr('cy', y(e.m.sens)).attr('r', 5).attr('fill', color(D)).attr('stroke', 'var(--color-bg)').attr('stroke-width', 2).style('cursor', 'default');
+      dot.on('mousemove', (ev) => { const r = el.getBoundingClientRect(); tip.show(`${D.name}: czułość ${pc(e.m.sens)}, swoistość ${pc(e.m.spec)}`, ev.clientX - r.left, ev.clientY - r.top); }).on('mouseleave', tip.hide);
+    }
+    const legend = mk('div', 'legend');
+    for (const D of M.dets) { const s = mk('span'); const sw = mk('i', 'sw'); sw.style.background = color(D); s.append(sw, document.createTextNode(`${D.name}, AUC ${f2(evalDet(D, S.split).auc)}`)); legend.append(s); }
+    el.replaceChildren(legend, F.svg.node(), tip.node);
+  });
+
+  // ---- pairs ----
+  dash.draw('pairs', (el) => {
+    const M = model(); if (!M) { blank(el); return; }
+    const m = { l: 150, r: 44, t: 8, b: 30 };
+    const rowH = 38, h = m.t + m.b + rowH * M.dets.length;
+    const F = frame(el, h, m);
+    const x = d3.scaleLinear([0, 1], [0, F.iw]);
+    const ax = F.g.append('g').attr('transform', `translate(0,${F.ih})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.format('.0%'))); styleAxis(ax);
+    M.dets.forEach((D, k) => {
+      const yy = k * rowH + 6, v = D.pairs.share;
+      F.g.append('text').attr('x', -10).attr('y', yy + 12).attr('text-anchor', 'end').text(D.name.length > 24 ? D.name.replace('Fast-DetectGPT', 'FDGPT') : D.name);
+      F.g.append('rect').attr('x', 0).attr('y', yy).attr('width', Math.max(1, x(v))).attr('height', 18).attr('rx', 3).attr('fill', color(D));
+      F.g.append('text').attr('x', x(v) + 6).attr('y', yy + 13).text(pc(v));
+    });
+    F.g.append('line').attr('x1', x(0.5)).attr('x2', x(0.5)).attr('y1', 0).attr('y2', F.ih).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+    el.replaceChildren(F.svg.node());
+  });
+
+  // ---- explorer ----
+  const cur = () => { const M = model(); return M ? M.by.get(S.det) : null; };
+  function pooledThreshold(D, q) {
+    const s = D.items.map((i) => i.s).sort((a, b) => b - a);
+    const k = Math.round(q * s.length);
+    return k <= 0 ? Infinity : s[Math.min(s.length - 1, k - 1)];
+  }
+  function exThr() {
+    const D = cur(); if (!D) return null;
+    const t = S.q == null ? D.thr : pooledThreshold(D, S.q);
+    return { D, t };
+  }
+  dash.draw('ex-thr', (el) => {
+    const r = exThr(); if (!r) { el.textContent = '—'; return; }
+    const share = D_share(r.D, r.t);
+    const slider = document.getElementById('gs-q');
+    if (slider) slider.value = String(Math.round(share * 200) / 2);
+    el.textContent = `próg ${Number.isFinite(r.t) ? f3(r.t) : '∞'}${S.q == null ? ' (zamrożony na dev)' : ''}, oznaczono ${pc(share)} tekstów`;
+  });
+  function D_share(D, t) { return D.items.filter((i) => i.s >= t).length / D.items.length; }
+  dash.draw('ex-cm', (el) => {
+    const r = exThr(); if (!r) { blank(el); return; }
+    const e = evalDet(r.D, S.split, r.t);
+    el.replaceChildren(matrix(e.c, true));
+  });
+  dash.draw('ex-metrics', (el) => {
+    const r = exThr(); if (!r) { blank(el); return; }
+    const m = evalDet(r.D, S.split, r.t).m;
+    const items = [
+      [pc(m.sens), 'Czułość: trafnie wykryte AI'], [pc(m.spec), 'Swoistość: trafnie rozpoznane ludzkie'],
+      [pc(m.ppv), 'Precyzja: wśród oznaczonych jako AI, prawdziwe AI'], [f2(m.f1), 'F1: średnia harmoniczna precyzji i czułości'],
+      [pc(m.acc), 'Dokładność: trafne decyzje ogółem'], [pc(m.bacc), 'Zrównoważona dokładność: średnia czułości i swoistości'],
+      [f2(m.j), 'J (Youden): czułość + swoistość − 1'], [f2(m.mcc), 'MCC: korelacja decyzji z prawdą'],
+    ];
+    el.replaceChildren(...items.map(([v, label]) => { const d = mk('div'); d.append(mk('dd', '', v), mk('dt', '', label)); return d; }));
+  });
+  dash.draw('ex-hist', (el) => {
+    const r = exThr(); if (!r) { blank(el); return; }
+    const items = sel(r.D.items, S.split);
+    const m = { l: 40, r: 10, t: 8, b: 34 };
+    const F = frame(el, 250, m);
+    const ext = d3.extent(r.D.items, (i) => i.s);
+    const x = d3.scaleLinear(ext, [0, F.iw]).nice();
+    const bin = d3.bin().domain(x.domain()).thresholds(BINS).value((i) => i.s);
+    const hum = items.filter((i) => !isAi(i)), ai = items.filter(isAi);
+    const bh = bin(hum), ba = bin(ai);
+    const frac = (b, n) => b.map((a) => a.length / (n || 1));
+    const fh = frac(bh, hum.length), fa = frac(ba, ai.length);
+    const y = d3.scaleLinear([0, Math.max(0.05, d3.max([...fh, ...fa]))], [F.ih, 0]).nice();
+    F.g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d3.format('.0%')).tickSize(-F.iw)).call((g) => { g.select('.domain').remove(); g.selectAll('line').attr('stroke', 'var(--cds-chart-grid)'); g.selectAll('text').attr('font-size', null).attr('font-family', null); });
+    styleAxis(F.g.append('g').attr('transform', `translate(0,${F.ih})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.format('.2~f'))));
+    const draw = (bins, fr, col) => bins.forEach((b, k) => {
+      F.g.append('rect').attr('x', x(b.x0) + 0.5).attr('y', y(fr[k])).attr('width', Math.max(0, x(b.x1) - x(b.x0) - 1)).attr('height', F.ih - y(fr[k])).attr('fill', col).attr('opacity', 0.6).attr('rx', 2);
+    });
+    draw(bh, fh, dash.colors[0]); draw(ba, fa, dash.colors[1]);
+    if (Number.isFinite(r.t) && r.t >= x.domain()[0] && r.t <= x.domain()[1]) {
+      F.g.append('line').attr('x1', x(r.t)).attr('x2', x(r.t)).attr('y1', 0).attr('y2', F.ih).attr('stroke', 'var(--color-fg)').attr('stroke-width', 2);
+    }
+    F.g.append('text').attr('x', F.iw / 2).attr('y', F.ih + 30).attr('text-anchor', 'middle').text('Wynik detektora (wyżej = bardziej maszynowy)');
+    const legend = mk('div', 'legend');
+    [['Teksty ludzkie', dash.colors[0]], ['Przeróbki AI', dash.colors[1]]].forEach(([n, c]) => { const s = mk('span'); const sw = mk('i', 'sw'); sw.style.background = c; s.append(sw, document.createTextNode(n)); legend.append(s); });
+    const lt = mk('span'); const bar = mk('i'); bar.style.cssText = 'width:2px;height:0.8rem;background:var(--color-fg);display:inline-block'; lt.append(bar, document.createTextNode('próg')); legend.append(lt);
+    el.replaceChildren(legend, F.svg.node());
+  });
+
+  // ---- controls ----
+  const redraw = (...names) => names.forEach((n) => dash.draw(n));
+  const ALL_SPLIT = ['cmp-body', 'cm-grid', 'roc', 'ex-thr', 'ex-cm', 'ex-metrics', 'ex-hist'];
+  document.querySelectorAll('.gs-split').forEach((b) => b.addEventListener('click', () => {
+    S.split = b.dataset.split;
+    document.querySelectorAll('.gs-split').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    redraw(...ALL_SPLIT);
+  }));
+  document.querySelectorAll('.gs-det').forEach((b) => b.addEventListener('click', () => {
+    S.det = b.dataset.det; S.q = null;
+    document.querySelectorAll('.gs-det').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    redraw('ex-thr', 'ex-cm', 'ex-metrics', 'ex-hist');
+  }));
+  const slider = document.getElementById('gs-q');
+  if (slider) slider.addEventListener('input', () => {
+    S.q = Number(slider.value) / 100;
+    const D = cur(); const t = D ? pooledThreshold(D, S.q) : NaN;
+    S.t = t;
+    redraw('ex-cm', 'ex-metrics', 'ex-hist');
+    const el = document.querySelector('[data-draw="ex-thr"]');
+    if (D && el) el.textContent = `próg ${Number.isFinite(t) ? f3(t) : '∞'}, oznaczono ${pc(D_share(D, t))} tekstów`;
+  });
+  const reset = document.getElementById('gs-reset');
+  if (reset) reset.addEventListener('click', () => { S.q = null; redraw('ex-thr', 'ex-cm', 'ex-metrics', 'ex-hist'); });
+})();
+</script>
