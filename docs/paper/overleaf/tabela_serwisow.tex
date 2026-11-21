@@ -2,7 +2,7 @@
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \begin{longtable}{@{}l c r r r r r l l l@{}}
-\caption{Wszystkie porównywane serwisy, posortowane według $\pi_{\mathrm{gold}}$. Odsetki oznaczonych w procentach (FPR 5\%, Pangram), przedziały dla $\pi$ w procentach i na poziomie 90\%.}\label{tab:serwisy}\\
+\caption{Wszystkie porównywane serwisy, posortowane według $\pi_{\mathrm{gold}}$. Odsetki oznaczonych w procentach (FPR 5\%, Pangram), przedziały dla $\pi$ w procentach i na poziomie 90\% (dolny koniec jest jednostronną granicą 95\%). Grupy według reguły z tab.~\ref{tab:regula}. Dla \texttt{zmianynaziemi.pl} odsetek oznaczonych przekracza TPR z G2, więc $\pi_{\mathrm{gold}}$ jest obcięte (sekcja~\ref{sec:estymator}).}\label{tab:serwisy}\\
 \toprule
 serwis & warstwa & $n$ 2020--22 & oznaczone 2020--22 & $n$ 2023--25 & oznaczone 2023--25 & nadwyżka (pp) & $\pi_{\mathrm{min}}$ [90\% CI] & $\pi_{\mathrm{gold}}$ [90\% CI] & grupa \\
 \midrule
@@ -13,7 +13,7 @@ serwis & warstwa & $n$ 2020--22 & oznaczone 2020--22 & $n$ 2023--25 & oznaczone 
 \endhead
 \bottomrule
 \endlastfoot
-\texttt{zmianynaziemi.pl} & S2 & 551 & 3,1 & 312 & 36,5 & 33,5 & 34,5 [29,8; 39,3] & 100,0 [100,0; 100,0] & mocne dowody \\
+\texttt{zmianynaziemi.pl} & S2 & 551 & 3,1 & 312 & 36,5 & 33,5 & 34,5 [29,8; 39,3] & $>$100 (obcięte) & mocne dowody \\
 \texttt{pap.pl} & S2 & 83 & 6,0 & 339 & 16,2 & 10,2 & 10,9 [4,2; 15,6] & 51,1 [22,9; 83,0] & prawdopodobnie \\
 \texttt{goniec.pl} & S2 & 283 & 5,3 & 600 & 15,7 & 10,4 & 10,9 [7,5; 14,1] & 50,1 [31,4; 77,0] & prawdopodobnie \\
 \texttt{globalna.info} & S3 & 379 & 9,8 & 336 & 17,3 & 7,5 & 8,3 [3,6; 12,8] & 46,2 [19,5; 87,4] & poniżej progu \\
