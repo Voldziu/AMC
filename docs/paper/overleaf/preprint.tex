@@ -93,8 +93,8 @@ serwisy z danymi & 41 & 43 & 41 & 42 & 35 & 30 & 45 \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\linewidth]{fig01_coverage.png}
-\caption{Liczba artykułów i serwisów z danymi w kolejnych latach. Pełna tabela serwis $\times$ rok jest w repozytorium (\texttt{figures/fig01b\_coverage\_heatmap}).}\label{fig:pokrycie}
+\includegraphics{fig01b_coverage_heatmap.pdf}
+\caption{Liczba artykułów w każdym serwisie i roku po filtrach (kwota 200 na serwis i rok; „--”: brak artykułów). Wiersze pogrupowane według warstw próby: S1 -- największe serwisy według rankingu Tranco, S2 -- dalsze serwisy z rankingu, S3 -- serwisy spoza rankingu dodane ręcznie. Pionowa linia oddziela okres bazowy 2020--2022 od okresu badanego 2023--2025. Sumy roczne są w tabeli~\ref{tab:pokrycie}.}\label{fig:pokrycie}
 \end{figure}
 
 \subsection{Nierówne pokrycie i wyłączenia}
@@ -154,8 +154,8 @@ zwykła perplexity (1,5B) & 0,71 & 0,77 [0,72; 0,81] & 92\% & 1\% \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{fig02_instrument_auc.png}
-\caption{AUC na dwóch zbiorach odniesienia. Detektory Bielika działają na tekstach z modeli open-source (Śmigiel), ale nie widzą przeróbek GPT w polskich newsach (gold). Krzywe ROC są w repozytorium (\texttt{figures/fig02b\_roc}).}\label{fig:auc}
+\includegraphics[width=\linewidth]{fig02_instrument_auc.pdf}
+\caption{AUC pięciu detektorów na dwóch zbiorach odniesienia. Puste kółka: Śmigiel (PolEval 2025; 1000 krótkich polskich tekstów, w tym 500 z modeli open-source). Pełne kółka z wąsami: zbiór gold (100 przeróbek G2 wobec 100 ludzkich oryginałów G1) z 95\% przedziałem bootstrap. Detektory poza Pangramem liczone na Bieliku 1,5B. Linia kropkowana: AUC 0,5, czyli brak rozróżnienia. Krzywe ROC na zbiorze gold są w repozytorium (\texttt{figures/fig02b\_roc.pdf}).}\label{fig:auc}
 \end{figure}
 
 \subsection{Próg, czułość i wybór FPR 5\%}\label{sec:prog}
@@ -164,8 +164,8 @@ Próg ustawiamy na tekstach z lat 2020--2022 ze zbiorów \texttt{train} i \textt
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\linewidth]{fig03_threshold_hist.png}
-\caption{Rozkład wyniku Pangrama dla naszych tekstów z lat 2020--2022, ludzkich oryginałów G1 i przeróbek G2.}\label{fig:prog}
+\includegraphics[width=\linewidth]{fig03_threshold_hist.pdf}
+\caption{Odsetek tekstów z wynikiem Pangrama większym niż $s$: nasze teksty z lat 2020--2022 ($n = 20\,814$), G1 -- 100 ludzkich artykułów z 2020 r. z 24 naszych serwisów, G2 -- te same artykuły przepisane przez \texttt{gpt-4.1-mini}. Linia kropkowana: próg 0,472 przy FPR 5\%. Przy tym progu oznaczonych jest 26\% przeróbek G2 (TPR) i 6\% oryginałów G1.}\label{fig:prog}
 \end{figure}
 
 Stały FPR i kalibracja na tekstach ludzkich z tej samej dziedziny to praktyka znana z benchmarku RAID~\cite{raid}. Każdemu detektorowi ustawiano tam próg tak, by 5\% tekstów ludzkich było błędnie oznaczonych. Autorzy pokazali, że domyślne progi dają w otwartych detektorach bardzo wysoki odsetek fałszywych alarmów, a jeden próg globalny daje w poszczególnych dziedzinach wyraźnie różny FPR. Z tego drugiego wniosku wynika nasz układ: próg jest jeden, ale poziom bazowy $b$ mierzymy osobno dla każdego serwisu.
@@ -215,20 +215,20 @@ brak nadwyżki ponad dryf & nadwyżka $\leq\delta$ \\
 
 \subsection{Stabilność detektora w latach bez AI}
 
-W latach 2020--2022 odsetek oznaczonych jest płaski (4,8\%, 5,1\%, 4,9\%), także w panelu 16 serwisów, które mają dane w każdym roku (4,6\%, 4,4\%, 5,0\%). W tym stałym składzie wzrost zaczyna się dopiero w 2024 r. (4,0\% w 2023, 7,1\% w 2024, 8,5\% w 2025). Wzrost widoczny w 2023 r. we wszystkich 45 serwisach razem (7,1\%) pochodzi więc z serwisów spoza stałego składu, między innymi \dom{neon24.pl}, który nie ma poziomu bazowego i nie wchodzi do porównania (rys.~\ref{fig:lata}). Dlatego ta liczba jest wyższa niż odsetek 5,7\% w 2023 r. dla 37 porównywanych serwisów w tabeli~\ref{tab:zbiorczy}.
+W latach 2020--2022 odsetek oznaczonych jest płaski (4,8\%, 5,1\%, 4,9\%), także w stałym składzie 16 serwisów, które mają co najmniej 30 tekstów w każdym roku (4,6\%, 4,4\%, 5,0\%). W tym stałym składzie wzrost zaczyna się dopiero w 2024 r. (4,0\% w 2023, 7,1\% w 2024, 8,5\% w 2025). Wzrost widoczny w 2023 r. we wszystkich 45 serwisach razem (7,1\%) pochodzi więc z serwisów spoza stałego składu, między innymi \dom{neon24.pl}, który nie ma poziomu bazowego i nie wchodzi do porównania (rys.~\ref{fig:lata}). Dlatego ta liczba jest wyższa niż odsetek 5,7\% w 2023 r. dla 37 porównywanych serwisów w tabeli~\ref{tab:zbiorczy}.
 
 W teście placebo zmiany w serwisach bez AI są małe i symetryczne wokół zera (mediana +0,2 pp, 95.\ percentyl +2,9 pp). Po 2022 r. rozkład przesuwa się w prawo (mediana +2,5 pp), a 17 z 37 serwisów ma nadwyżkę większą niż $\delta$ (rys.~\ref{fig:placebo}). W latach 2020--2022 nie widać więc dryfu detektora z roku na rok. Ta kontrola nie wyklucza jednak zmiany, która zaczęła się dokładnie po 2022 r. z innego powodu (sekcja~\ref{sec:ograniczenia}).
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\linewidth]{fig04_yearly.png}
-\caption{Odsetek tekstów oznaczonych przez Pangram (FPR 5\%) w kolejnych latach. Pasma: 95\% przedział Wilsona.}\label{fig:lata}
+\includegraphics[width=\linewidth]{fig04_yearly.pdf}
+\caption{Odsetek tekstów oznaczonych przez Pangram (próg przy FPR 5\%) w kolejnych latach: wszystkie 45 serwisów oraz stały skład, czyli 16 serwisów z co najmniej 30 tekstami w każdym roku. Odsetki surowe, bez poprawki na skład serwisów (por. tab.~\ref{tab:zbiorczy}). Wąsy: 95\% przedział Wilsona~\cite{wilson1927}, który zakłada niezależność artykułów. Linia kropkowana: docelowy FPR 5\%; pionowa linia: premiera ChatGPT (30 XI 2022).}\label{fig:lata}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\linewidth]{fig05_placebo.png}
-\caption{Zmiany odsetka oznaczonych w serwisach bez AI (placebo, 2020--2022) i po 2022 r.}\label{fig:placebo}
+\includegraphics[width=\linewidth]{fig05_placebo.pdf}
+\caption{Dystrybuanty empiryczne zmian odsetka oznaczonych w serwisie (Pangram, FPR 5\%). Szara: placebo bez AI, czyli 110 porównań jednego roku z lat 2020--2022 z dwoma pozostałymi. Niebieska: 37 porównywanych serwisów, lata 2023--2025 wobec 2020--2022. Linia kropkowana: margines $\delta = 2{,}9$ pp (95.\ percentyl placebo); 17 z 37 serwisów ma nadwyżkę większą niż $\delta$.}\label{fig:placebo}
 \end{figure}
 
 \subsection{Wynik zbiorczy}
@@ -289,8 +289,8 @@ razem & 11 & 19 & 7 & 37 \\
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\linewidth,height=0.86\textheight,keepaspectratio]{fig06_forest.png}
-\caption{\pimin{} i \pigold{} z 90\% CI dla 37 porównywanych serwisów (dolny koniec przedziału jest jednostronną granicą 95\%). Pogrubione nazwy: serwisy „masowe”, szare: bez nadwyżki ponad dryf. Wartości liczbowe są w aneksie.}\label{fig:las}
+\includegraphics[width=\linewidth]{fig06_forest.pdf}
+\caption{Udział tekstów AI w latach 2023--2025 dla 37 porównywanych serwisów. Lewy panel: \pimin{} (dolna granica przy czułości 100\%), prawy: \pigold{} (czułość 26\% zmierzona na przeróbkach G2); osie mają różne skale. Wąsy: 90\% przedział (5.--95.\ percentyl symulacji), którego dolny koniec jest jednostronną granicą 95\%. Przedziały obcięte do $[0, 100\%]$. Dla \dom{zmianynaziemi.pl} \pigold{} przekracza 100\% (strzałka) i jest obcięte. Wypełnienie znacznika: grupa serwisu według reguły z tab.~\ref{tab:regula}. Linia przerywana: próg „masowo” 20\%. S1--S3: warstwy próby. Wartości liczbowe są w aneksie.}\label{fig:las}
 \end{figure}
 
 Tabela~\ref{tab:grupy} pokazuje podział serwisów na grupy, a rysunek~\ref{fig:las} przedziały dla każdego z nich.
@@ -311,8 +311,8 @@ Reguła uśrednia lata 2023--2025, przez co jest ostrożna wobec serwisów, któ
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{fig07_timelines.png}
-\caption{Odsetek oznaczonych tekstów rok po roku w serwisach „masowych” i w najmocniejszym kandydacie bez porównania przed/po. Pod rokiem liczba tekstów. Pasmo: 95\% przedział Wilsona.}\label{fig:czas}
+\includegraphics[width=\linewidth]{fig07_timelines.pdf}
+\caption{Odsetek tekstów oznaczonych przez Pangram (FPR 5\%) rok po roku w pięciu serwisach „masowych” i w najmocniejszym kandydacie bez porównania przed/po (\dom{neon24.pl}). Pod rokiem liczba tekstów („--”: brak). Wąsy: 95\% przedział Wilsona (w tab.~\ref{tab:rok} przedziały dla \pimin{} są 90\%). Puste kółka: $n < 30$. Czarna linia: poziom bazowy $b$ serwisu z lat 2020--2022, przedłużony kropkami na lata 2023--2025. Pionowa linia: premiera ChatGPT.}\label{fig:czas}
 \end{figure}
 
 \begin{table}[t]
@@ -341,8 +341,8 @@ Sprawdzamy, czy lista serwisów masowych zmienia się, gdy zmienimy decyzje, kt�
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{fig08_robustness.png}
-\caption{Grupa każdego serwisu, który choć raz był „masowy”, w dziewięciu wariantach analizy (główna analiza: FPR 5\%).}\label{fig:odpornosc}
+\includegraphics[width=\linewidth]{fig08_robustness.pdf}
+\caption{Grupa serwisu w dziewięciu wariantach analizy, dla 14 serwisów, które w co najmniej jednym wariancie były „masowe”. Kolumny: próg przy FPR 1, 5 (analiza główna), 10 i 20\%; osobny próg FPR 5\% w każdej z 8 klas długości tekstu; margines $\delta$ z 90.\ i 99.\ percentyla placebo (zamiast 95.); definicja „masowo” $\geq$10\% i $\geq$30\% (zamiast 20\%). $\bullet\bullet$ masowo: mocne dowody, $\bullet$ masowo: prawdopodobnie; jasnoniebieskie: nadwyżka poniżej progu; białe: brak nadwyżki ponad dryf.}\label{fig:odpornosc}
 \end{figure}
 
 \subsection{Inny próg FPR}\label{sec:fpr}
@@ -432,8 +432,8 @@ korelacja rang z Pangramem (teksty / nadwyżki serwisów) & 1 / 1 & 0,02 / 0,23 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{fig09_detectors_yearly.png}
-\caption{Ten sam próg (FPR 5\%) dla trzech detektorów.}\label{fig:detektory}
+\includegraphics[width=\linewidth]{fig09_detectors_yearly.pdf}
+\caption{Odsetek tekstów oznaczonych przez trzy detektory w kolejnych latach (wszystkie 45 serwisów, odsetki surowe, bez poprawki na skład). Próg przy FPR 5\% ustalony osobno dla każdego detektora na tekstach z lat 2020--2022. Wąsy: 95\% przedział Wilsona. Binoculars i Fast-DetectGPT (model bazowy) na Bieliku 4,5B; na zbiorze gold sprawdzono tylko wersję 1,5B. Pionowa linia: premiera ChatGPT.}\label{fig:detektory}
 \end{figure}
 
 Detektory Bielika nie pokazują prawie żadnego wzrostu. Po wynikach walidacji uznajemy, że to skutek ich ślepoty na teksty typu GPT i nie świadczy o braku AI. Mierzą też coś innego niż Pangram: korelacja rang wyników tych samych tekstów wynosi 0,02--0,08. Wyjątkiem jest \dom{zmianynaziemi.pl}, który wyróżnia się we wszystkich trzech detektorach (w Binoculars odsetek oznaczonych rośnie z 1,6\% do 17,0\%). Detektory zbudowane na innej zasadzie wskazują więc ten sam serwis. Traktujemy to jako zgodność, a nie niezależne potwierdzenie, z dwóch powodów. Po pierwsze, zmiana w serwisie niezwiązana z AI, np. nowy szablon strony albo inny typ tekstów, mogłaby przesunąć wyniki obu detektorów jednocześnie. Po drugie, nasza interpretacja jest asymetryczna: zgodność czytamy jako wsparcie, a brak zgodności w innych serwisach tłumaczymy ślepotą detektorów Bielika. Taka interpretacja jest spójna z walidacją, ale z samych tych danych nie da się jej sfalsyfikować. Jeśli wzrost w \dom{zmianynaziemi.pl} pochodzi z AI, to skoro Bielik nie widzi przeróbek GPT, a teksty tego serwisu widzi, są one prawdopodobnie innego rodzaju (pisane od zera albo innym modelem), co zgadza się z \pigold{} powyżej 100\% u Pangrama. W \dom{goniec.pl}, \dom{nczas.com}, \dom{pap.pl} i \dom{elblag.net} detektory Bielika widzą mały wzrost albo żaden (\pimin{} 0--8,5\%). Przy ich ślepocie nie jest to dowód przeciw, ale nie jest też potwierdzeniem.
