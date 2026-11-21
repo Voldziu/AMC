@@ -1,0 +1,16 @@
+{
+  "config": {
+    "observer": "speakleash/Bielik-4.5B-v3",
+    "performer": "speakleash/Bielik-4.5B-v3.0-Instruct",
+    "max_tokens": 512,
+    "dtype": "bfloat16",
+    "quantize": "8bit"
+  },
+  "devices": [
+    "cuda:0",
+    "cuda:0"
+  ],
+  "torch": "2.15.0+cu132",
+  "transformers": "5.22.1",
+  "python": "3.12.3"
+}

@@ -63,3 +63,25 @@ Custom paths, ratios, and seed are available through the module CLI:
 ```bash
 uv run python -m news_detector.pipeline --help
 ```
+
+## Run the zero-shot detectors
+
+Binoculars and Fast-DetectGPT score every text with a pair of Polish Bielik models.
+They need no training data.
+Thresholds are calibrated on the 2020-2022 articles, which we assume are human-written.
+The step-by-step guide, including running the larger model on a GPU in Google Colab, is in [docs/detektory.md](docs/detektory.md) (in Polish).
+
+```bash
+make detect          # PRESET=bielik-1.5b by default -> data/detect/bielik-1.5b.csv
+make detect-report   # -> data/detect/reports/bielik-1.5b/
+make smigiel         # labelled Polish sanity check (PolEval 2025 Śmigiel)
+```
+
+Scoring needs the optional `detect` dependency group (torch, transformers, peft); see the guide.
+
+`detect score` also runs Pangram's EditLens classifier (Llama-3.2-3B + LoRA adapter, English-only, CC BY-NC-SA) and writes `data/detect/pangram.csv`, independent of the preset.
+Both models are gated on Hugging Face: accept their licences first.
+Use `--no-pangram` to skip it.
+
+The comparison of the detectors and models (Śmigiel check, placebo test, per-year and per-domain results, power, threshold-free comparison, Pangram analyses, candidates for manual review) is in `src/notebooks/detect-compare.ipynb`.
+It only reads the files in `data/detect/`, so it needs no GPU.
