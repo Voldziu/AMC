@@ -56,6 +56,14 @@ Wkład pracy jest trojaki.
 \item Wyniki dla 37 polskich serwisów z lat 2020--2025 wraz z analizą ich odporności na dziewięć wariantów metody.
 \end{enumerate}
 
+\section{Prace pokrewne}\label{sec:prace}
+
+\paragraph{Pomiar udziału AI w korpusach.} Hanley i Durumeric~\cite{hanley2024} zastosowali klasyfikator syntetycznych newsów do ponad 15 mln artykułów z 3074 anglojęzycznych serwisów. Między styczniem 2022 a majem 2023 udział tekstów syntetycznych rósł szybciej w serwisach dezinformacyjnych niż w głównym nurcie, i to głównie w małych serwisach. Russell i in.~\cite{russell2025} użyli Pangrama na amerykańskich gazetach i ocenili, że około 9\% nowo publikowanych artykułów powstało w części lub w całości z udziałem AI, częściej w małych tytułach lokalnych. Liang i in.~\cite{liang2024icml, liang2025} szacują udział tekstów zmodyfikowanych przez LLM w recenzjach konferencyjnych i pracach naukowych metodą rozkładową, bez klasyfikowania pojedynczych tekstów, i sprawdzają ją na tekstach sprzed premiery ChatGPT. Od tych prac różnimy się językiem, wynikiem osobno dla każdego serwisu i jawnie modelowaną czułością detektora.
+
+\paragraph{Estymacja udziału przy niedoskonałym klasyfikatorze.} Nasz estymator to w epidemiologii poprawka Rogana--Gladena~\cite{rogan}, a w uczeniu maszynowym metoda \emph{adjusted classify and count} z literatury o kwantyfikacji~\cite{forman2008, gonzalez2017}. W obu tradycjach odsetek pozytywnych wyników testu koryguje się znanymi odsetkami fałszywych alarmów i trafień. Problemy, z którymi się mierzymy, też są tam znane. Gdy czułość zmierzona na danych walidacyjnych nie przenosi się na dane docelowe, estymator jest obciążony, a gdy mianownik $\mathrm{TPR}-b$ jest mały, staje się bardzo niestabilny.
+
+\paragraph{Detektory i ich przenośność.} Metody zero-shot oceniają, jak przewidywalny jest tekst dla modelu językowego: DetectGPT~\cite{detectgpt} przez krzywiznę log-prawdopodobieństwa, Fast-DetectGPT~\cite{fastdetectgpt} przez jej szybkie przybliżenie, Binoculars~\cite{binoculars} przez stosunek perplexity dwóch modeli. Detektory uczone, jak Pangram EditLens~\cite{editlens}, przewidują stopień udziału AI w tekście. Benchmark RAID~\cite{raid} pokazał, że skuteczność detektorów silnie zależy od dziedziny i że domyślne progi dają wysokie odsetki fałszywych alarmów. Dla polskiego najbliższym punktem odniesienia jest zadanie Śmigiel z PolEval 2025~\cite{smigiel} i modele Bielik~\cite{bielik}. Według naszej wiedzy nikt dotąd nie porównał tych detektorów na polskich newsach przerobionych przez model komercyjny.
+
 \section{Dane}
 
 \subsection{Rama próby i pobieranie}
@@ -436,6 +444,11 @@ Ograniczenia, które uważamy za najważniejsze, są następujące.
 \bibitem{cc} Common Crawl, \url{https://commoncrawl.org}. Lista crawli: \texttt{config/crawls.yaml} w repozytorium.
 \bibitem{raid} Dugan, L., Hwang, A., Trhlik, F., Ludan, J. M., Zhu, A., Xu, H., Ippolito, D., Callison-Burch, C. (2024). \emph{RAID: A Shared Benchmark for Robust Evaluation of Machine-Generated Text Detectors}. ACL 2024, arXiv:2405.07940.
 \bibitem{liang2025} Liang, W. i in. (2025). Quantifying large language model usage in scientific papers. \emph{Nature Human Behaviour}.
+\bibitem{hanley2024} Hanley, H. W. A., Durumeric, Z. (2024). Machine-Made Media: Monitoring the Mobilization of Machine-Generated Articles on Misinformation and Mainstream News Websites. \emph{Proceedings of the International AAAI Conference on Web and Social Media (ICWSM)}, 18, 542--556.
+\bibitem{liang2024icml} Liang, W. i in. (2024). Monitoring AI-Modified Content at Scale: A Case Study on the Impact of ChatGPT on AI Conference Peer Reviews. \emph{Proceedings of the 41st International Conference on Machine Learning (ICML)}, PMLR 235.
+\bibitem{forman2008} Forman, G. (2008). Quantifying counts and costs via classification. \emph{Data Mining and Knowledge Discovery}, 17(2), 164--206.
+\bibitem{gonzalez2017} González, P., Castaño, A., Chawla, N. V., del Coz, J. J. (2017). A Review on Quantification Learning. \emph{ACM Computing Surveys}, 50(5), 74:1--74:40.
+\bibitem{detectgpt} Mitchell, E., Lee, Y., Khazatsky, A., Manning, C. D., Finn, C. (2023). DetectGPT: Zero-Shot Machine-Generated Text Detection using Probability Curvature. \emph{Proceedings of the 40th International Conference on Machine Learning (ICML)}, PMLR 202.
 \bibitem{russell2025} Russell, J., Karpinska, M., Akinode, D., Thai, K., Emi, B., Spero, M., Iyyer, M. (2025). \emph{AI use in American newspapers is widespread, uneven, and rarely disclosed}. arXiv:2510.18774.
 \end{thebibliography}
 
