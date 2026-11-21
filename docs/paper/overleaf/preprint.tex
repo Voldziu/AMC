@@ -1,9 +1,14 @@
 \documentclass[11pt,a4paper]{article}
 
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+\fi
 \usepackage[polish]{babel}
-\usepackage{lmodern}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{microtype}
 \usepackage{amsmath}
@@ -19,13 +24,14 @@
 \captionsetup{font=small,labelfont=bf}
 \setlength{\parskip}{0.3em}
 \setlength{\parindent}{1.2em}
+\setlength{\emergencystretch}{3em}
 
 \newcommand{\pimin}{\ensuremath{\pi_{\mathrm{min}}}}
 \newcommand{\pigold}{\ensuremath{\pi_{\mathrm{gold}}}}
 \newcommand{\dom}[1]{\texttt{#1}}
 
 \title{Ile polskich serwisów newsowych publikuje masowo teksty generowane przez AI?\\
-\large Pomiar bez etykiet na 35 tysiącach artykułów z lat 2020-2025}
+\large Pomiar bez etykiet na 35 tysiącach artykułów z lat 2020--2025}
 \author{Mikołaj Machalski \and Mikołaj Czachorowski \and Wojciech Makowski \and Jan Szyndlarewicz}
 \date{10 listopada 2026}
 
@@ -126,7 +132,7 @@ Detektory sprawdzamy na dwóch zbiorach. Pierwszy to Śmigiel z PolEval 2025~\ci
 
 \subsection{Wybór detektora}
 
-Tabela~\ref{tab:auc} i rysunek~\ref{fig:auc} pokazują rozdźwięk. Detektory Bielika radzą sobie na Śmigielu równie dobrze jak Pangram (AUC 0,79--0,84 wobec 0,80), ale na przeróbkach GPT w polskich newsach nie odróżniają przeróbki od oryginału (AUC 0,49--0,56). Skoro na Śmigielu nie są gorsze, to ich ślepota na zbiorze gold nie wygląda na błąd implementacji. Najprawdopodobniej mierzą, jak przewidywalny jest tekst dla Bielika, a przeróbka GPT, która zachowuje fakty, nazwiska i cytaty oryginału, jest dla Bielika tak samo przewidywalna jak on sam. Zwykła perplexity ma przyzwoite AUC (0,77), ale przy naszym progu nie oznacza prawie niczego (TPR 1\%).
+Skuteczność detektora opisujemy trzema miarami. AUC (pole pod krzywą ROC) to prawdopodobieństwo, że losowy tekst AI dostanie wyższy wynik niż losowy tekst ludzki. FPR (odsetek fałszywych alarmów) to odsetek tekstów ludzkich powyżej progu, a TPR (czułość) to odsetek tekstów AI powyżej progu. Różnice odsetków podajemy w punktach procentowych (pp), a przedziały ufności oznaczamy CI. Tabela~\ref{tab:auc} i rysunek~\ref{fig:auc} pokazują rozdźwięk. Detektory Bielika radzą sobie na Śmigielu równie dobrze jak Pangram (AUC 0,79--0,84 wobec 0,80), ale na przeróbkach GPT w polskich newsach nie odróżniają przeróbki od oryginału (AUC 0,49--0,56). Skoro na Śmigielu nie są gorsze, to ich ślepota na zbiorze gold nie wygląda na błąd implementacji. Najprawdopodobniej mierzą, jak przewidywalny jest tekst dla Bielika, a przeróbka GPT, która zachowuje fakty, nazwiska i cytaty oryginału, jest dla Bielika tak samo przewidywalna jak on sam. Zwykła perplexity ma przyzwoite AUC (0,77), ale przy naszym progu nie oznacza prawie niczego (TPR 1\%).
 
 Główną analizę prowadzimy więc na Pangramie. Zdecydowała walidacja. To, jaki wynik detektor daje na badanych danych, nie miało wpływu na wybór. Zbiór gold policzyliśmy tylko dla Bielika 1,5B, a w danych używamy wersji 4,5B z oknem 512 tokenów. Na Śmigielu wersja 4,5B daje prawie te same krzywe, więc zakładamy, bez bezpośredniego sprawdzenia, że ślepota dotyczy też jej.
 
@@ -159,26 +165,26 @@ Próg ustawiamy na tekstach z lat 2020--2022 ze zbiorów \texttt{train} i \textt
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\linewidth]{fig03_threshold_hist.png}
-\caption{Rozkład wyniku Pangrama dla naszych tekstów z lat 2020-2022, ludzkich oryginałów G1 i przeróbek G2.}\label{fig:prog}
+\caption{Rozkład wyniku Pangrama dla naszych tekstów z lat 2020--2022, ludzkich oryginałów G1 i przeróbek G2.}\label{fig:prog}
 \end{figure}
 
 Stały FPR i kalibracja na tekstach ludzkich z tej samej dziedziny to praktyka znana z benchmarku RAID~\cite{raid}. Każdemu detektorowi ustawiano tam próg tak, by 5\% tekstów ludzkich było błędnie oznaczonych. Autorzy pokazali, że domyślne progi dają w otwartych detektorach bardzo wysoki odsetek fałszywych alarmów, a jeden próg globalny daje w poszczególnych dziedzinach wyraźnie różny FPR. Z tego drugiego wniosku wynika nasz układ: próg jest jeden, ale poziom bazowy $b$ mierzymy osobno dla każdego serwisu.
 
-Wartość 5\% jest konwencją i nie twierdzimy, że jest optymalna. Przy 1\% Pangram wykrywa tylko 10\% przeróbek, więc nadwyżka w serwisie byłaby ułamkiem punktu procentowego, a każdy błąd mnożyłby się przez $1/(\mathrm{TPR}-b)\approx 11$. Przy 10-20\% czułość rośnie, ale próg schodzi w środek rozkładu tekstów ludzkich, gdzie wynik silniej zależy od gatunku i długości tekstu, i rośnie dryf (margines dryfu z 2,9 pp przy 5\% do 9,6 pp przy 20\%). Poziom 5\% przyjęliśmy przed obejrzeniem wyników dla serwisów, a wyniki dla 1, 10 i 20\% pokazujemy w sekcji~\ref{sec:fpr}.
+Wartość 5\% jest konwencją i nie twierdzimy, że jest optymalna. Przy 1\% Pangram wykrywa tylko 10\% przeróbek, więc nadwyżka w serwisie byłaby ułamkiem punktu procentowego, a każdy błąd mnożyłby się przez $1/(\mathrm{TPR}-b)\approx 11$. Przy 10--20\% czułość rośnie, ale próg schodzi w środek rozkładu tekstów ludzkich, gdzie wynik silniej zależy od gatunku i długości tekstu, i rośnie dryf (margines dryfu z 2,9 pp przy 5\% do 9,6 pp przy 20\%). Poziom 5\% przyjęliśmy przed obejrzeniem wyników dla serwisów, a wyniki dla 1, 10 i 20\% pokazujemy w sekcji~\ref{sec:fpr}.
 
 \subsection{Estymator}\label{sec:estymator}
 
-Dla serwisu znamy trzy wielkości: $b$, czyli odsetek oznaczonych tekstów w latach 2020-2022 (fałszywe alarmy na tekstach ludzkich tego serwisu), $r$, czyli ten sam odsetek w latach 2023-2025, oraz TPR. Jeśli udział AI wynosi $\pi$, to $r=\pi\cdot\mathrm{TPR}+(1-\pi)\,b$, skąd
+Dla serwisu znamy trzy wielkości: $b$, czyli odsetek oznaczonych tekstów w latach 2020--2022 (fałszywe alarmy na tekstach ludzkich tego serwisu), $r$, czyli ten sam odsetek w latach 2023--2025, oraz TPR. Jeśli udział AI wynosi $\pi$, to $r=\pi\cdot\mathrm{TPR}+(1-\pi)\,b$, skąd
 \begin{equation}
 \pi=\frac{r-b}{\mathrm{TPR}-b},
 \end{equation}
-obcięte do przedziału $[0,1]$. To estymator Rogana-Gladena~\cite{rogan}, którego epidemiolodzy używają do szacowania częstości choroby testem o znanej czułości i swoistości. Pojedynczy oznaczony artykuł niczego nie dowodzi, bo przy FPR 5\% co dwudziesty tekst ludzki też jest oznaczony. Wnioskujemy wyłącznie o nadwyżce na poziomie serwisu.
+obcięte do przedziału $[0,1]$. To estymator Rogana--Gladena~\cite{rogan}, którego epidemiolodzy używają do szacowania częstości choroby testem o znanej czułości i swoistości. Pojedynczy oznaczony artykuł niczego nie dowodzi, bo przy FPR 5\% co dwudziesty tekst ludzki też jest oznaczony. Wnioskujemy wyłącznie o nadwyżce na poziomie serwisu.
 
 Czułość znamy tylko dla przeróbek GPT-4.1-mini. Dla tekstów, które serwisy faktycznie publikują (inny model, pisanie od zera, tłumaczenie, poprawki człowieka), może być inna. Podajemy więc dwa szacunki. \pimin{} przyjmuje TPR = 100\%. Detektor nie wykryje więcej niż wszystkich tekstów AI, więc \pimin{} jest dolną granicą prawdziwego udziału, ale tylko warunkowo: przy założeniu, że bez AI poziom bazowy serwisu by się nie zmienił, a artykuły są od siebie niezależne. \pigold{} przyjmuje TPR = 26\% z przeróbek G2. Jest realistyczny, jeśli teksty AI w serwisie są równie trudne do wykrycia jak przeróbki, a dla tekstów łatwiejszych do wykrycia, np. generowanych od zera, udział przeszacowuje. \pigold{} traktujemy więc jako szacunek warunkowy, a nie górną granicę, bo górnej granicy udziału nie identyfikujemy. Gdy odsetek oznaczonych w serwisie przekracza TPR, model z TPR z G2 nie może opisywać danych i \pigold{} wychodzi powyżej 100\%. Obcinamy go wtedy do 100\% i oznaczamy w tabelach jako „$>$100”. Oznacza to, że teksty AI w tym serwisie są łatwiejsze do wykrycia niż nasze przeróbki.
 
 \subsection{Margines dryfu}\label{sec:dryf}
 
-Estymator zakłada, że bez AI odsetek oznaczonych by się nie zmienił. Detektor może jednak reagować na zmianę tematów, stylu albo szablonu strony. W serwisach, które mają co najmniej 50 tekstów w danym roku, porównujemy więc jeden rok z lat 2020--2022 z dwoma pozostałymi (razem 110 porównań). AI nie było w żadnym z nich, więc każda różnica to losowość albo dryf. Za margines $\delta$ przyjmujemy 95.\ percentyl tych różnic, czyli 2,9 punktu procentowego (pp). Nadwyżkę serwisu uznajemy za coś więcej niż szum dopiero wtedy, gdy przekracza $\delta$.
+Estymator zakłada, że bez AI odsetek oznaczonych by się nie zmienił. Detektor może jednak reagować na zmianę tematów, stylu albo szablonu strony. W serwisach, które mają co najmniej 50 tekstów w danym roku, porównujemy więc jeden rok z lat 2020--2022 z dwoma pozostałymi (razem 110 porównań). AI nie było w żadnym z nich, więc każda różnica to losowość albo dryf. Za margines $\delta$ przyjmujemy 95.\ percentyl tych różnic, czyli 2,9 pp. Nadwyżkę serwisu uznajemy za coś więcej niż szum dopiero wtedy, gdy przekracza $\delta$.
 
 Margines ma trzy ograniczenia, które trzeba nazwać wprost. Po pierwsze, łączy dryf i zwykły szum losowania i ich nie rozdziela. Placebo pokazuje tylko, że w latach 2020--2022 zmiany są małe, a nie, ile z nich to dryf. Po drugie, $\delta$ jest jedną liczbą dla wszystkich serwisów, choć szum zależy od ich liczby tekstów, więc dla małych serwisów kryterium jest łagodniejsze. Po trzecie, dla grup „masowych” warunek nadwyżka $>\delta$ nie jest wiążący, bo dolna granica udziału $\geq 20\%$ i tak wymusza nadwyżkę znacznie większą od $\delta$. O tym, czy serwis jest masowy, decyduje więc dolna granica przedziału, a $\delta$ oddziela tylko serwisy bez żadnego sygnału. Placebo nie wykryje też zmiany, która zaczęła się dopiero po 2022 r. (sekcja~\ref{sec:ograniczenia}).
 
@@ -228,7 +234,7 @@ W teście placebo zmiany w serwisach bez AI są małe i symetryczne wokół zera
 \subsection{Wynik zbiorczy}
 
 \begin{table}[t]
-\centering\small
+\centering\footnotesize\setlength{\tabcolsep}{4pt}
 \caption{Wynik zbiorczy z poprawką na skład serwisów. Przedziały 95\%.}\label{tab:zbiorczy}
 \begin{tabular}{@{}lrrrrll@{}}
 \toprule
@@ -245,7 +251,7 @@ okres & teksty & poziom bazowy & oznaczone & nadwyżka & \pimin{} & \pigold{} \\
 H1 się potwierdza (tab.~\ref{tab:zbiorczy}). W latach 2023--2025 dolna granica udziału tekstów AI (\pimin) wynosi 4,0\% [2,4; 6,1], a szacunek przy czułości z przeróbek (\pigold) 18,1\% [9,7; 32,2]. Obie liczby są szacunkami punktowymi przy różnych założeniach o czułości, a nie końcami przedziału. Górnej granicy nie identyfikujemy. W 2023 r. nadwyżka jest mała, a przedział \pigold{} obejmuje zero, w latach 2024--2025 jest wyraźna. Zjawisko narasta więc z opóźnieniem względem premiery ChatGPT. Przedziały \pigold{} są szerokie, bo czułość znamy ze 100 przeróbek, i to jest główne źródło niepewności w całym badaniu.
 
 \begin{table}[t]
-\centering\small
+\centering\footnotesize\setlength{\tabcolsep}{4pt}
 \caption{Wynik zbiorczy dla lat 2023--2025 według warstw, z poprawką na skład serwisów. Przedziały 95\%, z losowania serwisów ze zwracaniem. Przy siedmiu serwisach S3 przedział z takiego losowania jest mało wiarygodny.}\label{tab:warstwy}
 \begin{tabular}{@{}lrrrrll@{}}
 \toprule
@@ -255,7 +261,7 @@ S1 & 11 & 5\,566 & 4,3\% & 6,1\% & 1,8\% [0,3; 3,4] & 8,1\% [1,5; 16,9] \\
 S2 & 19 & 6\,249 & 4,6\% & 9,6\% & 5,2\% [2,2; 9,3] & 23,3\% [8,8; 47,9] \\
 S3 & 7 & 2\,352 & 6,1\% & 11,9\% & 6,1\% [4,2; 8,2] & 29,0\% [16,8; 50,1] \\
 \midrule
-bez 5 serwisów masowych & 32 & 12\,415 & 4,7\% & 7,1\% & 2,5\% [1,5; 3,6] & 11,3\% [6,0; 19,6] \\
+bez 5 masowych & 32 & 12\,415 & 4,7\% & 7,1\% & 2,5\% [1,5; 3,6] & 11,3\% [6,0; 19,6] \\
 wszystkie & 37 & 14\,167 & 4,7\% & 8,6\% & 4,0\% [2,4; 6,1] & 18,1\% [9,7; 32,2] \\
 \bottomrule
 \end{tabular}
@@ -370,7 +376,7 @@ Dla sprawdzenia ustawiliśmy próg osobno w ośmiu równolicznych przedziałach 
 
 Przy łagodniejszej definicji (co najmniej 10\% tekstów) serwisów masowych jest 12, razem z mocnymi dowodami. Dochodzą wtedy m.in. dwa serwisy S1 (\dom{money.pl} i \dom{dziennik.pl}) oraz \dom{globalna.info}, \dom{dziennik-polityczny.com}, \dom{lelum.pl}, \dom{tvmalbork.pl} i \dom{demagog.org.pl}. Przy ostrzejszej (30\%) są dwa: \dom{goniec.pl} oraz \dom{zmianynaziemi.pl}, który spada wtedy z mocnych dowodów do „prawdopodobnie”, bo dolna granica jego \pimin{} (29,8\%) leży tuż pod 30\%. Liczba serwisów masowych silnie zależy więc od definicji i dlatego podajemy ją zawsze razem z nią.
 
-Margines dryfu z 90., 95. i 99.\ percentyla placebo (2,3; 2,9 i 4,7 pp) nie zmienia listy masowych: to w każdym wariancie te same pięć serwisów, a ich nadwyżki (od około 8 do 33 pp) są dużo większe niż każde $\delta$. Od $\delta$ zależy tylko liczba serwisów z jakimkolwiek sygnałem (14, 12 albo 8 w grupie „poniżej progu”).
+Margines $\delta$ z 90., 95.\ i 99.\ percentyla placebo (2,3; 2,9 i 4,7 pp) nie zmienia listy masowych: w każdym wariancie jest to tych samych pięć serwisów, a ich nadwyżki (od około 8 do 33 pp) są dużo większe niż każde $\delta$. Od $\delta$ zależy tylko liczba serwisów z jakimkolwiek sygnałem (14, 12 albo 8 w grupie „poniżej progu”).
 
 \subsection{Czy przedziały dla serwisów mają deklarowane pokrycie}\label{sec:pokrycie}
 
@@ -472,14 +478,14 @@ Wymieniamy serwisy z nazwy, bo pytanie badawcze dotyczy poszczególnych serwisó
 \bibitem{binoculars} Hans, A., Schwarzschild, A., Cherepanova, V., Kazemi, H., Saha, A., Goldblum, M., Geiping, J., Goldstein, T. (2024). \emph{Spotting LLMs With Binoculars: Zero-Shot Detection of Machine-Generated Text}. Proceedings of the 41st International Conference on Machine Learning (ICML), PMLR 235.
 \bibitem{fastdetectgpt} Bao, G., Zhao, Y., Teng, Z., Yang, L., Zhang, Y. (2024). \emph{Fast-DetectGPT: Efficient Zero-Shot Detection of Machine-Generated Text via Conditional Probability Curvature}. ICLR 2024.
 \bibitem{editlens} Thai, K., Emi, B., Masrour, E., Iyyer, M. (2026). \emph{EditLens: Quantifying the Extent of AI Editing in Text}. ICLR 2026, arXiv:2510.03154.
-\bibitem{rogan} Rogan, W. J., Gladen, B. (1978). Estimating prevalence from the results of a screening test. \emph{American Journal of Epidemiology}, 107(1), 71-76.
-\bibitem{smigiel} Przybyła, P. i in. (2025). \emph{PolEval 2025 Task 1 Śmigiel: Spotting Machine-Generated Text from LLMs for Polish}. Proceedings of the PolEval 2025 Workshop, s.~5-15.
+\bibitem{rogan} Rogan, W. J., Gladen, B. (1978). Estimating prevalence from the results of a screening test. \emph{American Journal of Epidemiology}, 107(1), 71--76.
+\bibitem{smigiel} Przybyła, P. i in. (2025). \emph{PolEval 2025 Task 1 Śmigiel: Spotting Machine-Generated Text from LLMs for Polish}. Proceedings of the PolEval 2025 Workshop, s.~5--15.
 \bibitem{bielik} Ociepa, K., Flis, Ł., Kinas, R., Wróbel, K., Gwoździej, A. (2025). \emph{Bielik v3 Small: Technical Report}. arXiv:2505.02550.
 \bibitem{tranco} Le Pochat, V., Van Goethem, T., Tajalizadehkhoob, S., Korczyński, M., Joosen, W. (2019). \emph{Tranco: A Research-Oriented Top Sites Ranking Hardened Against Manipulation}. NDSS 2019.
 \bibitem{trafilatura} Barbaresi, A. (2021). \emph{Trafilatura: A Web Scraping Library and Command-Line Tool for Text Discovery and Extraction}. Proceedings of ACL-IJCNLP 2021: System Demonstrations.
 \bibitem{cc} Common Crawl, \url{https://commoncrawl.org}. Lista crawli: \texttt{config/crawls.yaml} w repozytorium.
 \bibitem{raid} Dugan, L., Hwang, A., Trhlik, F., Ludan, J. M., Zhu, A., Xu, H., Ippolito, D., Callison-Burch, C. (2024). \emph{RAID: A Shared Benchmark for Robust Evaluation of Machine-Generated Text Detectors}. ACL 2024, arXiv:2405.07940.
-\bibitem{liang2025} Liang, W. i in. (2025). Quantifying large language model usage in scientific papers. \emph{Nature Human Behaviour}.
+\bibitem{liang2025} Liang, W., Zhang, Y., Wu, Z., Lepp, H. i in. (2025). Quantifying large language model usage in scientific papers. \emph{Nature Human Behaviour}. doi:10.1038/s41562-025-02273-8.
 \bibitem{brown2001} Brown, L. D., Cai, T. T., DasGupta, A. (2001). Interval Estimation for a Binomial Proportion. \emph{Statistical Science}, 16(2), 101--133.
 \bibitem{wilson1927} Wilson, E. B. (1927). Probable Inference, the Law of Succession, and Statistical Inference. \emph{Journal of the American Statistical Association}, 22(158), 209--212.
 \bibitem{hanley2024} Hanley, H. W. A., Durumeric, Z. (2024). Machine-Made Media: Monitoring the Mobilization of Machine-Generated Articles on Misinformation and Mainstream News Websites. \emph{Proceedings of the International AAAI Conference on Web and Social Media (ICWSM)}, 18, 542--556.
@@ -493,7 +499,7 @@ Wymieniamy serwisy z nazwy, bo pytanie badawcze dotyczy poszczególnych serwisó
 \appendix
 \section{Wszystkie porównywane serwisy}
 
-Tabela~\ref{tab:serwisy} zawiera wszystkie 37 serwisów z porównania przed/po. Plik CSV jest w \texttt{docs/preprint/tables/domains.csv}.
+Tabela~\ref{tab:serwisy} zawiera wszystkie 37 serwisów z porównania przed/po. Te same dane w formacie CSV generuje notatnik \texttt{src/notebooks/main-results.ipynb}.
 
 \input{tabela_serwisow.tex}
 
